@@ -13,7 +13,7 @@
   </button>
 
   <button
-    *ngFor="let category of categories; trackBy: trackByCategoryId"
+    *ngFor="let category of orderedCategories; trackBy: trackByCategoryId"
     type="button"
     class="category-tile"
     [class.selected]="isSelected(category.id)"

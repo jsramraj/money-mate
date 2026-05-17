@@ -27,12 +27,18 @@ export class CategoryGridSelectorComponent implements OnChanges {
   private readonly defaultIcon = 'pricetag-outline';
   private readonly registeredIconNames = new Set<string>([this.defaultIcon]);
   private selectedCategoryIdSet = new Set<string>();
+  orderedCategories: Category[] = [];
 
   constructor() {
     addIcons({ pricetagOutline });
   }
 
   ngOnChanges(): void {
+    this.orderedCategories = [...this.categories].sort((firstCategory, secondCategory) =>
+      firstCategory.name.localeCompare(secondCategory.name, undefined, {
+        sensitivity: 'base'
+      })
+    );
     this.selectedCategoryIdSet = new Set(this.selectedCategoryIds);
     this.registerCategoryIcons(this.categories);
   }
