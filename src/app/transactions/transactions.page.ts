@@ -351,6 +351,8 @@ export class TransactionsPage implements OnInit, OnDestroy {
   }
 
   async openFilterModal(): Promise<void> {
+    await this.refreshLookups();
+
     this.analyticsService.trackEvent('transactions_filter_opened', {
       active_filter_count: this.activeFilterCount,
     });
@@ -360,7 +362,6 @@ export class TransactionsPage implements OnInit, OnDestroy {
       componentProps: {
         initialFilters: this.filters,
         accounts: this.accounts,
-        categories: this.categories,
         availableTags: this.availableTags,
       },
     });

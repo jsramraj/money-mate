@@ -21,6 +21,7 @@ import {
 import { addIcons } from 'ionicons';
 import { close, checkmark, trash } from 'ionicons/icons';
 import { Account, Category, TransactionType } from '../../core/database/models';
+import { CategoryRepository } from '../../core/database/repositories';
 import { CategoryGridModalComponent } from '../../shared/category-grid-selector/category-grid-modal.component';
 
 export interface TransactionFilterState {
@@ -63,8 +64,10 @@ export class TransactionFilterModalComponent {
   };
 
   @Input() accounts: Account[] = [];
-  @Input() categories: Category[] = [];
+  @Input() categories?: Category[];
   @Input() availableTags: string[] = [];
+
+  resolvedCategories: Category[] = [];
 
   form: TransactionFilterState = {
     types: ['expense', 'income', 'transfer'],
@@ -75,11 +78,14 @@ export class TransactionFilterModalComponent {
 
   readonly allTypes: TransactionType[] = ['expense', 'income', 'transfer'];
 
-  constructor(private readonly modalController: ModalController) {
+  constructor(
+    private readonly modalController: ModalController,
+    private readonly categoryRepository: CategoryRepository,
+  ) {
     addIcons({ close, checkmark, trash });
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     // Map null to '__uncategorized__' for UI binding
     const initialCategoryIds = (this.initialFilters.categoryIds ?? []).map(id => id === null ? '__uncategorized__' : id);
     this.form = {
@@ -92,6 +98,8 @@ export class TransactionFilterModalComponent {
     if (this.form.types.length === 0) {
       this.form.types = [...this.allTypes];
     }
+
+    await this.loadCategoriesIfNeeded();
   }
 
   isTypeSelected(type: TransactionType): boolean {
@@ -126,11 +134,13 @@ export class TransactionFilterModalComponent {
   }
 
   async openCategoryPicker(): Promise<void> {
+    await this.loadCategoriesIfNeeded();
+
     const modal = await this.modalController.create({
       component: CategoryGridModalComponent,
       componentProps: {
         title: 'Categories',
-        categories: this.categories,
+        categories: this.resolvedCategories,
         selectedCategoryIds: [...this.form.categoryIds],
         includeUncategorized: true,
       },
@@ -144,6 +154,16 @@ export class TransactionFilterModalComponent {
     }
 
     this.form.categoryIds = [...data];
+  }
+
+  private async loadCategoriesIfNeeded(): Promise<void> {
+    const providedCategories = this.categories ?? [];
+    if (providedCategories.length > 0) {
+      this.resolvedCategories = [...providedCategories];
+      return;
+    }
+
+    this.resolvedCategories = await this.categoryRepository.getCategoriesForSettings();
   }
 
   async cancel(): Promise<void> {
