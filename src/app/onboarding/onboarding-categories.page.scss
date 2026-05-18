@@ -10,3 +10,19 @@ ion-item {
 ion-button {
   margin-top: 16px;
 }
+
+.info-message {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.info-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--ion-color-primary);
+}
+
+.info-subtitle {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}

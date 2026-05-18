@@ -3,10 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
   IonButton,
-  IonCheckbox,
   IonContent,
   IonHeader,
-  IonItem,
   IonLabel,
   IonList,
   IonTitle,
@@ -16,16 +14,34 @@ import {
 import { DatabaseService } from '../core/database/database.service';
 import { DEFAULT_CATEGORIES } from '../core/database/models/category.model';
 import { FormsModule } from '@angular/forms';
+import { CategoryGridSelectorComponent } from '../shared/category-grid-selector/category-grid-selector.component';
 
 @Component({
   selector: 'app-onboarding-categories',
   standalone: true,
   templateUrl: './onboarding-categories.page.html',
   styleUrls: ['./onboarding-categories.page.scss'],
-  imports: [CommonModule, FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonCheckbox, IonButton],
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonButton,
+    CategoryGridSelectorComponent,
+  ],
 })
 export class OnboardingCategoriesPage {
-  categories = DEFAULT_CATEGORIES.map(category => ({ ...category, selected: true }));
+  categories = DEFAULT_CATEGORIES.map(category => ({
+    ...category,
+    id: crypto.randomUUID().toString(),
+    createdBy: 'system',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    selected: true,
+  }));
+  selectedCategoryIds = this.categories.map(category => category.id);
 
   constructor(
     private readonly databaseService: DatabaseService,
@@ -35,7 +51,7 @@ export class OnboardingCategoriesPage {
 
   async saveCategories(): Promise<void> {
     const selectedCategories = this.categories
-      .filter(category => category.selected)
+      .filter(category => this.selectedCategoryIds.includes(category.id))
       .map(category => ({
         ...category,
         createdAt: new Date(),
@@ -46,7 +62,6 @@ export class OnboardingCategoriesPage {
 
     try {
       await this.databaseService.saveCategoriesWithMetadata(selectedCategories);
-
       localStorage.setItem('money-mate-categories-onboarded', 'true');
 
       const toast = await this.toastController.create({
@@ -68,5 +83,9 @@ export class OnboardingCategoriesPage {
       });
       await toast.present();
     }
+  }
+
+  onSelectedCategoryIdsChange(ids: string[]): void {
+    this.selectedCategoryIds = ids;
   }
 }
