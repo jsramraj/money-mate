@@ -42,10 +42,19 @@
       <ion-label position="stacked">Description</ion-label>
       <ion-input
         [(ngModel)]="form.description"
-        placeholder="What was this for?"
-        (ionBlur)="onDescriptionBlur($event)"
+        (ionInput)="filterDescriptionSuggestions($event)"
+        placeholder="Enter description"
       ></ion-input>
     </ion-item>
+
+    <ion-list *ngIf="filteredSuggestions.length > 0" class="autocomplete-dropdown">
+      <ion-item
+        *ngFor="let suggestion of filteredSuggestions"
+        (click)="selectDescription(suggestion)"
+      >
+        {{ suggestion }}
+      </ion-item>
+    </ion-list>
 
     <ion-item>
       <ion-label position="stacked">{{ form.type === 'transfer' ? 'From Account *' : 'Account *' }}</ion-label>

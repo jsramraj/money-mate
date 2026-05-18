@@ -441,4 +441,26 @@ export class TransactionRepository {
       this.getRecentTransactions(this.recentTransactionsCacheSize)
     ]);
   }
+
+  async getUniqueDescriptions(lastMonths: number): Promise<string[]> {
+    const sinceDate = new Date();
+    sinceDate.setMonth(sinceDate.getMonth() - lastMonths);
+
+    // Handle mixed persisted key types (`Date` and ISO `string`) while still using the date index.
+    const sinceIso = sinceDate.toISOString();
+    const [dateKeyMatches, stringKeyMatches] = await Promise.all([
+      this.db.transactions.where('date').aboveOrEqual(sinceDate).toArray(),
+      this.db.transactions.where('date').aboveOrEqual(sinceIso).toArray(),
+    ]);
+
+    const transactionsById = new Map<string, Transaction>();
+    [...dateKeyMatches, ...stringKeyMatches].forEach((transaction) => {
+      transactionsById.set(transaction.id, transaction);
+    });
+
+    const transactions = Array.from(transactionsById.values());
+
+    const descriptions = transactions.map(tx => tx.description).filter(desc => !!desc);
+    return Array.from(new Set(descriptions)); // Ensure uniqueness
+  }
 }

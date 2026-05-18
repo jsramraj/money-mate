@@ -88,7 +88,8 @@ export class TransactionFormPage implements OnInit, OnDestroy {
 
   private categoryManuallySelected = false;
   private categoriesSubscription?: Subscription;
-
+  descriptionSuggestions: string[] = [];
+  filteredSuggestions: string[] = [];
 
   get isEditMode(): boolean {
     return !!this.transactionToEdit;
@@ -166,6 +167,9 @@ export class TransactionFormPage implements OnInit, OnDestroy {
       // only for new transactions, not when editing existing one
       this.setupDescriptionAutoCategorization();
     }
+
+    // Fetch unique descriptions from the last 6 months
+    this.descriptionSuggestions = await this.transactionRepository.getUniqueDescriptions(6);
 
     const lastUsedAccountId = this.getLastUsedAccountId();
     const hasLastUsedAccount = !!lastUsedAccountId && this.accounts.some((account) => account.id === lastUsedAccountId);
@@ -496,5 +500,17 @@ export class TransactionFormPage implements OnInit, OnDestroy {
       console.error('Error deleting transaction:', error);
       this.saving = false;
     }
+  }
+
+  filterDescriptionSuggestions(event: any): void {
+    const input = event.target.value.toLowerCase();
+    this.filteredSuggestions = this.descriptionSuggestions.filter(desc =>
+      desc.toLowerCase().includes(input)
+    );
+  }
+
+  selectDescription(suggestion: string): void {
+    this.form.description = suggestion;
+    this.filteredSuggestions = []; // Clear suggestions after selection
   }
 }
