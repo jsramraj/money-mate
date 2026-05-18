@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Out
 import { IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import * as ionicons from 'ionicons/icons';
-import { pricetagOutline } from 'ionicons/icons';
+import { addOutline, pricetagOutline } from 'ionicons/icons';
 import { Category } from '../../core/database/models';
 
 @Component({
@@ -20,8 +20,11 @@ export class CategoryGridSelectorComponent implements OnChanges {
   @Input() includeUncategorized = true;
   @Input() uncategorizedLabel = 'Uncategorized';
   @Input() singleSelect = false;
+  @Input() showAddCategoryTile = false;
+  @Input() addCategoryLabel = 'New Category';
 
   @Output() selectedCategoryIdsChange = new EventEmitter<string[]>();
+  @Output() addCategoryClick = new EventEmitter<void>();
 
   readonly uncategorizedId = '__uncategorized__';
   private readonly defaultIcon = 'pricetag-outline';
@@ -30,7 +33,7 @@ export class CategoryGridSelectorComponent implements OnChanges {
   orderedCategories: Category[] = [];
 
   constructor() {
-    addIcons({ pricetagOutline });
+    addIcons({ pricetagOutline, addOutline });
   }
 
   ngOnChanges(): void {
@@ -84,6 +87,10 @@ export class CategoryGridSelectorComponent implements OnChanges {
   getCategoryColor(color?: string): string {
     const normalizedColor = color?.trim();
     return normalizedColor || 'var(--ion-color-medium)';
+  }
+
+  onAddCategoryClick(): void {
+    this.addCategoryClick.emit();
   }
 
   private registerCategoryIcons(categories: Category[]): void {

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import {
   AlertController,
   IonBadge,
@@ -74,7 +75,7 @@ import { CategoryGridModalComponent } from '../shared/category-grid-selector/cat
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TransactionQuickAddPage implements OnInit {
+export class TransactionQuickAddPage implements OnInit, OnDestroy {
   private readonly currencyKey = 'money-mate-currency';
   private readonly previewDisplayLimit = 500;
   private readonly uncategorizedOptionValue = '__uncategorized__';
@@ -89,6 +90,7 @@ export class TransactionQuickAddPage implements OnInit {
   error: string | null = null;
   preview: CsvImportPreviewResult | null = null;
   importResult: CsvImportCommitResult | null = null;
+  private categoriesSubscription?: Subscription;
   
   constructor(
     private readonly accountRepository: AccountRepository,
@@ -109,8 +111,18 @@ export class TransactionQuickAddPage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.selectedCurrency = localStorage.getItem(this.currencyKey) || 'USD';
+
+    this.categoriesSubscription = this.categoryRepository.categories$.subscribe((categories) => {
+      this.categories = categories;
+      this.cdr.markForCheck();
+    });
+
     await Promise.all([this.loadAccounts(), this.loadCategories()]);
     await this.autoCategorizationService.initialize();
+  }
+
+  ngOnDestroy(): void {
+    this.categoriesSubscription?.unsubscribe();
   }
 
 
@@ -332,6 +344,8 @@ export class TransactionQuickAddPage implements OnInit {
   }
 
   async openCategoryPicker(row: CsvImportTransactionPreview): Promise<void> {
+    await this.categoryRepository.getCategories();
+
     const selectedCategoryId = this.getCategoryValueForRow(row);
     const modal = await this.modalController.create({
       component: CategoryGridModalComponent,
@@ -342,6 +356,7 @@ export class TransactionQuickAddPage implements OnInit {
           selectedCategoryId === this.uncategorizedOptionValue ? [] : [selectedCategoryId],
         includeUncategorized: true,
         singleSelect: true,
+        showAddCategoryTile: true,
       },
     });
 

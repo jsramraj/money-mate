@@ -10,18 +10,15 @@
 </ion-header>
 
 <ion-content>
-  <div class="manage-categories-action">
-    <ion-button fill="clear" size="small" (click)="openManageCategories()" aria-label="Go to manage categories page">
-      Manage Categories
-    </ion-button>
-  </div>
-
   <app-category-grid-selector
     [categories]="resolvedCategories"
     [selectedCategoryIds]="localSelectedCategoryIds"
     (selectedCategoryIdsChange)="onSelectedCategoryIdsChange($event)"
     [includeUncategorized]="effectiveIncludeUncategorized"
     [singleSelect]="singleSelect"
+    [showAddCategoryTile]="showAddCategoryTile"
+    addCategoryLabel="New Category"
+    (addCategoryClick)="openCreateCategory()"
     uncategorizedLabel="Uncategorized"
   ></app-category-grid-selector>
 </ion-content>

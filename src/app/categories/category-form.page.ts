@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -60,6 +60,8 @@ interface CategoryFormValue {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryFormPage implements OnInit {
+  @Input() asModal = false;
+
   readonly iconPickerConfig: Partial<IconPickerConfig> = {
     sourceUrl: 'assets/assets/ionic-icons.json',
     initialVisibleCount: 100,
@@ -204,6 +206,11 @@ export class CategoryFormPage implements OnInit {
   }
 
   async cancel(): Promise<void> {
+    if (this.asModal) {
+      await this.modalController.dismiss(undefined, 'cancel');
+      return;
+    }
+
     await this.router.navigate(['/settings/categories']);
   }
 
@@ -232,9 +239,22 @@ export class CategoryFormPage implements OnInit {
         }
 
         await this.presentToast('Category updated', 'success');
+
+        if (this.asModal) {
+          await this.modalController.dismiss(
+            await this.categoryRepository.getCategoryById(this.category.id, true),
+            'saved'
+          );
+          return;
+        }
       } else {
-        await this.categoryRepository.createCategory(payload);
+        const createdCategory = await this.categoryRepository.createCategory(payload);
         await this.presentToast('Category created', 'success');
+
+        if (this.asModal) {
+          await this.modalController.dismiss(createdCategory, 'saved');
+          return;
+        }
       }
 
       await this.router.navigate(['/settings/categories']);

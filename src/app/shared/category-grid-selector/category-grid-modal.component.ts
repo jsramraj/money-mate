@@ -11,11 +11,11 @@ import {
   ModalController,
   IonIcon,
 } from '@ionic/angular/standalone';
-import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { checkmark, close, trash } from 'ionicons/icons';
 import { Category } from '../../core/database/models';
 import { CategoryRepository } from '../../core/database/repositories';
+import { CategoryFormPage } from '../../categories/category-form.page';
 import { CategoryGridSelectorComponent } from './category-grid-selector.component';
 
 @Component({
@@ -42,6 +42,7 @@ export class CategoryGridModalComponent {
   @Input() selectedCategoryIds: string[] = [];
   @Input() includeUncategorized = true;
   @Input() singleSelect = false;
+  @Input() showAddCategoryTile = false;
 
   resolvedCategories: Category[] = [];
   localSelectedCategoryIds: string[] = [];
@@ -52,7 +53,6 @@ export class CategoryGridModalComponent {
 
   constructor(
     private readonly modalController: ModalController,
-    private readonly router: Router,
     private readonly categoryRepository: CategoryRepository
   ) {
     addIcons({ close, checkmark, trash });
@@ -77,9 +77,25 @@ export class CategoryGridModalComponent {
     this.localSelectedCategoryIds = [];
   }
 
-  async openManageCategories(): Promise<void> {
-    await this.modalController.dismiss(undefined, 'manage-categories');
-    await this.router.navigate(['/settings/categories']);
+  async openCreateCategory(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: CategoryFormPage,
+      componentProps: {
+        asModal: true,
+      },
+      backdropDismiss: false,
+      showBackdrop: true,
+      cssClass: 'full-screen-modal',
+    });
+
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<Category | undefined>();
+
+    if (role !== 'saved' || !data?.id) {
+      return;
+    }
+
+    await this.refreshCategories();
   }
 
   private async refreshCategories(): Promise<void> {

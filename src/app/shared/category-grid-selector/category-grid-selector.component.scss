@@ -49,6 +49,13 @@
   opacity: 1;
 }
 
+.add-category-tile {
+  opacity: 1;
+  border-style: dashed;
+  border-color: rgba(var(--ion-color-primary-rgb), 0.55);
+  background: rgba(var(--ion-color-primary-rgb), 0.06);
+}
+
 .tile-icon {
   font-size: 20px;
 }

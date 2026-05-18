@@ -13,6 +13,17 @@
   </button>
 
   <button
+    *ngIf="showAddCategoryTile"
+    type="button"
+    class="category-tile add-category-tile"
+    (click)="onAddCategoryClick()"
+    aria-label="Add new category"
+  >
+    <ion-icon class="tile-icon" name="add-outline" [style.color]="'var(--ion-color-primary)'"></ion-icon>
+    <span class="tile-name">{{ addCategoryLabel }}</span>
+  </button>
+
+  <button
     *ngFor="let category of orderedCategories; trackBy: trackByCategoryId"
     type="button"
     class="category-tile"

@@ -1,9 +1,10 @@
 
 
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import {
   IonHeader,
   IonToolbar,
@@ -73,7 +74,7 @@ import { CategoryGridModalComponent } from '../shared/category-grid-selector/cat
   templateUrl: './transaction-form.page.html',
   styleUrls: ['./transaction-form.page.scss']
 })
-export class TransactionFormPage implements OnInit {
+export class TransactionFormPage implements OnInit, OnDestroy {
 
   addMore = false;
   private readonly lastUsedAccountStorageKey = 'money-mate-last-used-account-id';
@@ -86,6 +87,7 @@ export class TransactionFormPage implements OnInit {
   @ViewChild('amountInput') private amountInput?: IonInput;
 
   private categoryManuallySelected = false;
+  private categoriesSubscription?: Subscription;
 
 
   get isEditMode(): boolean {
@@ -132,12 +134,19 @@ export class TransactionFormPage implements OnInit {
 
 
   async ngOnInit(): Promise<void> {
-    const [accounts, categories] = await Promise.all([
+    const [accounts] = await Promise.all([
       this.accountRepository.getAccounts(),
       this.categoryRepository.getCategories()
     ]);
     this.accounts = accounts;
-    this.categories = categories;
+
+    this.categoriesSubscription = this.categoryRepository.categories$.subscribe((categories) => {
+      this.categories = categories;
+
+      if (this.form.categoryId && !categories.some((category) => category.id === this.form.categoryId)) {
+        this.form.categoryId = '';
+      }
+    });
 
     // Build description->category mapping from past year transactions
     await this.autoCategorizationService.initialize();
@@ -175,6 +184,10 @@ export class TransactionFormPage implements OnInit {
     this.focusAmountInput();
   }
 
+  ngOnDestroy(): void {
+    this.categoriesSubscription?.unsubscribe();
+  }
+
   private focusAmountInput(): void {
     setTimeout(() => {
       void this.amountInput?.setFocus();
@@ -202,6 +215,8 @@ export class TransactionFormPage implements OnInit {
   async openCategoryModal(): Promise<void> {
     if (this.saving) return;
 
+    await this.categoryRepository.getCategories();
+
     const modal = await this.modalController.create({
       component: CategoryGridModalComponent,
       componentProps: {
@@ -210,6 +225,7 @@ export class TransactionFormPage implements OnInit {
         selectedCategoryIds: this.form.categoryId ? [this.form.categoryId] : [],
         includeUncategorized: true,
         singleSelect: true,
+        showAddCategoryTile: true,
       },
     });
 
