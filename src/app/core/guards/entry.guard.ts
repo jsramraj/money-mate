@@ -6,9 +6,13 @@ export const appEntryGuard: CanMatchFn = () => {
   const router = inject(Router);
   const sessionService = inject(SessionService);
 
-  if (sessionService.hasCompletedEntry) {
-    return true;
+  if (!sessionService.hasCompletedEntry) {
+    return router.createUrlTree(['/login']);
   }
 
-  return router.createUrlTree(['/login']);
+  if (!sessionService.areCategoriesOnboarded()) {
+    return router.createUrlTree(['/onboarding-categories']);
+  }
+
+  return true;
 };

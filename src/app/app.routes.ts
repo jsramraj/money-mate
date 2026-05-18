@@ -16,6 +16,10 @@ export const routes: Routes = [
     loadComponent: () => import('./auth').then((m) => m.SheetOnboardingPage),
   },
   {
+    path: 'onboarding-categories',
+    loadComponent: () => import('./onboarding/onboarding-categories.page').then(m => m.OnboardingCategoriesPage),
+  },
+  {
     path: '',
     canMatch: [appEntryGuard],
     loadChildren: () => import('./tabs/tabs.routes').then((m) => m.routes),
