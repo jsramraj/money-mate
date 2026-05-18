@@ -140,9 +140,9 @@ export class LoginPage {
   }
 
   async continueOffline(): Promise<void> {
-    this.sessionService.continueOffline();
+    this.sessionService.continueOffline();    
     this.analyticsService.trackEvent('auth_continue_offline');
-    await this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
+    await this.router.navigate(['/onboarding-categories'], { replaceUrl: true });
   }
 
   toggleTroubleshooting(): void {

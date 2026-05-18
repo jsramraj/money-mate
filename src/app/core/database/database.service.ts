@@ -219,22 +219,7 @@ export class DatabaseService extends Dexie {
       // Check and initialize categories
       const categoryCount = await this.categories.count();
       if (categoryCount === 0) {
-        const { DEFAULT_CATEGORIES } = await import('./models/category.model');
-        
-        const categoriesWithMetadata = DEFAULT_CATEGORIES.map(category => ({
-          ...category,
-          id: crypto.randomUUID(),
-          isDirty: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdBy: 'system',
-          updatedBy: 'system'
-        }));
-
-        await this.runWithoutDirtyTracking(async () => {
-          await this.categories.bulkAdd(categoriesWithMetadata);
-        });
-        console.log('Default categories initialized successfully');
+        console.log('Default categories initialization skipped.');
       }
     } catch (error) {
       console.error('Error initializing default data:', error);
@@ -265,5 +250,21 @@ export class DatabaseService extends Dexie {
     ]);
 
     return { accounts, categories, transactions, budgets };
+  }
+
+  async saveCategoriesWithMetadata(categories: Omit<Category, 'id'>[]): Promise<void> {
+    const categoriesWithMetadata = categories.map(category => ({
+      ...category,
+      id: crypto.randomUUID(),
+      isDirty: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: 'user',
+      updatedBy: 'user',
+    }));
+
+    await this.runWithoutDirtyTracking(async () => {
+      await this.categories.bulkAdd(categoriesWithMetadata);
+    });
   }
 }

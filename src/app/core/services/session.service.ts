@@ -284,4 +284,9 @@ export class SessionService {
     });
     localStorage.removeItem(this.QUERY_PARAMS_KEY);
   }
+
+  areCategoriesOnboarded(): boolean {
+    const raw = localStorage.getItem('money-mate-categories-onboarded');
+    return raw === 'true';
+  }
 }

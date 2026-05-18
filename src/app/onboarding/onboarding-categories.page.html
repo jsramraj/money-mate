@@ -1,0 +1,25 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Pick Categories</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="ion-padding">
+    <p class="info-message">
+      <span class="info-title">Pick the categories you use most often</span><br />
+      <span class="info-subtitle">This helps us personalize your experience. You can always customize these later in Settings - edit the name, icon, and color anytime.</span>
+    </p>
+  </div>
+
+  <app-category-grid-selector
+    [categories]="categories"
+    [includeUncategorized]="false"
+    [selectedCategoryIds]="selectedCategoryIds"
+    (selectedCategoryIdsChange)="onSelectedCategoryIdsChange($event)"
+  ></app-category-grid-selector>
+
+  <div class="ion-padding">
+    <ion-button expand="block" (click)="saveCategories()">Save</ion-button>
+  </div>
+</ion-content>
