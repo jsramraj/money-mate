@@ -21,6 +21,10 @@
     (addCategoryClick)="openCreateCategory()"
     uncategorizedLabel="Uncategorized"
   ></app-category-grid-selector>
+
+  <div class="category-help-text" *ngIf="showAddCategoryTile">
+    You can customize these in Manage Categories under Settings in the side menu.
+  </div>
 </ion-content>
 
 <ion-footer *ngIf="!singleSelect">

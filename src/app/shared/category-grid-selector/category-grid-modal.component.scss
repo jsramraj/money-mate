@@ -5,6 +5,15 @@ ion-content {
   --padding-bottom: 8px;
 }
 
+.category-help-text {
+  margin-top: 10px;
+  padding: 6px 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ion-color-medium-shade);
+}
+
 ion-footer {
   ion-toolbar {
     --padding-start: 8px;

@@ -42,7 +42,7 @@
       </div>
     </ion-item>
 
-    <ion-item>
+    <ion-item *ngIf="isEditMode">
       <ion-label>Active</ion-label>
       <ion-toggle [(ngModel)]="form.isActive" slot="end"></ion-toggle>
     </ion-item>
