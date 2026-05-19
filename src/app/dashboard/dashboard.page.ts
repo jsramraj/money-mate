@@ -24,6 +24,10 @@ import {
   DashboardWidgetId
 } from './dashboard-widget-registry';
 import { DateRangeFilterComponent } from '../shared/date-range-filter/date-range-filter.component';
+import { AlertController } from '@ionic/angular';
+import { AccountRepository } from '../core/database/repositories/account.repository';
+import { SessionService } from '../core/services/session.service';
+import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-dashboard',
@@ -56,6 +60,10 @@ export class DashboardPage implements OnInit, OnDestroy {
   private readonly dateRangeService = inject(DashboardDateRangeService);
   private readonly analyticsService = inject(AnalyticsService);
   private routerSubscription?: Subscription;
+  private readonly accountRepository = inject(AccountRepository);
+  private readonly alertController = inject(AlertController);
+  private readonly sessionService = inject(SessionService);
+  private readonly toastController = inject(ToastController);
 
   constructor() {
     addIcons({ appsOutline });
@@ -77,8 +85,52 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.routerSubscription?.unsubscribe();
   }
 
-  ionViewWillEnter(): void {
+  async ionViewWillEnter(): Promise<void> {
     this.refreshVisibleWidgets();
+    await this.checkOnboardingAccounts();
+  }
+
+  private async checkOnboardingAccounts(): Promise<void> {
+    try {
+      if (this.sessionService.isOnboardingAccountsCompleted()) {
+        return;
+      }
+
+      const accounts = await this.accountRepository.getAccounts();
+      if (accounts.length === 1) {
+        const alert = await this.alertController.create({
+          header: 'Do you want to add your accounts now?',
+          message: 'You can add multiple accounts and manage them separately. You can add bank accounts, credit cards, cash wallets...',
+          buttons: [
+            {
+              text: 'Later',
+              role: 'cancel',
+              handler: async () => {
+                this.sessionService.markOnboardingAccountsCompleted();
+                this.analyticsService.trackEvent('onboarding_accounts_later');
+                const toast = await this.toastController.create({
+                  message: 'No worries — you can always add accounts later in Settings 🙂.',
+                  duration: 3000,
+                  position: 'bottom',
+                });
+                await toast.present();
+              },
+            },
+            {
+              text: 'Add Now',
+              handler: () => {
+                this.sessionService.markOnboardingAccountsCompleted();
+                this.router.navigate(['/settings/accounts']);
+                this.analyticsService.trackEvent('onboarding_accounts_add_now');
+              },
+            },
+          ],
+        });
+        await alert.present();
+      }
+    } catch (error) {
+      console.error('Error checking accounts for onboarding:', error);
+    }
   }
 
   onDateRangeChange(range: DashboardDateRange) {

@@ -16,6 +16,7 @@ import { DEFAULT_CATEGORIES } from '../core/database/models/category.model';
 import { FormsModule } from '@angular/forms';
 import { CategoryGridSelectorComponent } from '../shared/category-grid-selector/category-grid-selector.component';
 import { CategoryRepository } from '../core/database/repositories/category.repository';
+import { SessionService } from '../core';
 
 @Component({
   selector: 'app-onboarding-categories',
@@ -48,13 +49,14 @@ export class OnboardingCategoriesPage {
     private readonly databaseService: DatabaseService,
     private readonly router: Router,
     private readonly toastController: ToastController,
-    private readonly categoryRepository: CategoryRepository
+    private readonly categoryRepository: CategoryRepository,
+    private readonly sessionService: SessionService,
   ) {}
 
   async ngOnInit(): Promise<void> {
     const existingCategories = await this.categoryRepository.getCategories();
     if (existingCategories.length > 0) {
-      localStorage.setItem('money-mate-categories-onboarded', 'true');
+      this.sessionService.markOnboardingCategoriesCompleted();
       await this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
     }
   }
@@ -72,7 +74,7 @@ export class OnboardingCategoriesPage {
 
     try {
       await this.databaseService.saveCategoriesWithMetadata(selectedCategories);
-      localStorage.setItem('money-mate-categories-onboarded', 'true');
+      this.sessionService.markOnboardingCategoriesCompleted();
 
       const toast = await this.toastController.create({
         message: 'Categories saved successfully!',

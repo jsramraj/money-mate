@@ -36,6 +36,9 @@ export class SessionService {
   private readonly ENTRY_KEY = 'money-mate-auth-entry-completed';
   private readonly QUERY_PARAMS_KEY = 'money-mate-auth-query-params';
   private readonly SPREADSHEET_KEY = 'money-mate-linked-spreadsheet';
+  private readonly ONBOARDING_ACCOUNTS_KEY = 'money-mate-accounts-onboarded';
+  private readonly ONBOARDING_CATEGORIES_KEY = 'money-mate-categories-onboarded';
+
   private readonly AUTH_CALLBACK_PATH = '/auth/callback';
   private readonly sessionSubject = new BehaviorSubject<UserSession | null>(null);
   private initialized = false;
@@ -285,8 +288,20 @@ export class SessionService {
     localStorage.removeItem(this.QUERY_PARAMS_KEY);
   }
 
+  markOnboardingCategoriesCompleted(): void {
+    localStorage.setItem(this.ONBOARDING_CATEGORIES_KEY, 'true');
+  }
+
   areCategoriesOnboarded(): boolean {
-    const raw = localStorage.getItem('money-mate-categories-onboarded');
+    const raw = localStorage.getItem(this.ONBOARDING_CATEGORIES_KEY);
     return raw === 'true';
+  }
+  
+  markOnboardingAccountsCompleted(): void {
+    localStorage.setItem(this.ONBOARDING_ACCOUNTS_KEY, 'true');
+  }
+
+  isOnboardingAccountsCompleted(): boolean {
+    return localStorage.getItem(this.ONBOARDING_ACCOUNTS_KEY) === 'true';
   }
 }
