@@ -11,6 +11,7 @@
 
   <ion-item lines="none" class="tag-input-item">
     <ion-input
+      #tagInput
       [(ngModel)]="inputValue"
       [placeholder]="placeholder"
       [disabled]="disabled"
@@ -23,7 +24,7 @@
     ></ion-input>
   </ion-item>
 
-  <ion-list *ngIf="autocomplete && showSuggestions && filteredSuggestions.length > 0" class="autocomplete-dropdown">
+  <ion-list *ngIf="autocomplete && showSuggestions && filteredSuggestions.length > 0" class="autocomplete-dropdown" [class.above]="suggestionPosition === 'above'" [class.below]="suggestionPosition === 'below'">
     <ion-item
       *ngFor="let suggestion of filteredSuggestions; let i = index"
       (click)="selectSuggestion(suggestion)"

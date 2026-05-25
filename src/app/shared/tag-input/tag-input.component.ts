@@ -1,4 +1,4 @@
-import { Component, EventEmitter, forwardRef, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
@@ -43,10 +43,13 @@ export class TagInputComponent implements ControlValueAccessor {
   @Output() addTag = new EventEmitter<string>();
   @Output() removeTag = new EventEmitter<string>();
 
+  @ViewChild('tagInput', { read: ElementRef }) private tagInputElement?: ElementRef<HTMLElement>;
+
   value: string[] = [];
   inputValue = '';
   filteredSuggestions: string[] = [];
   showSuggestions = false;
+  suggestionPosition: 'below' | 'above' = 'below';
   selectedSuggestionIndex = 0;
   disabled = false;
 
@@ -76,11 +79,15 @@ export class TagInputComponent implements ControlValueAccessor {
   onInput(event: any): void {
     this.inputValue = event.target.value ?? '';
     this.updateSuggestions();
+    if (this.showSuggestions) {
+      this.setSuggestionPosition();
+    }
   }
 
   onFocus(): void {
     if (this.autocomplete) {
       this.updateSuggestions();
+      this.setSuggestionPosition();
       this.showSuggestions = true;
     }
   }
@@ -88,6 +95,7 @@ export class TagInputComponent implements ControlValueAccessor {
   onClick(): void {
     if (this.autocomplete) {
       this.updateSuggestions();
+      this.setSuggestionPosition();
       this.showSuggestions = true;
     }
   }
@@ -104,6 +112,21 @@ export class TagInputComponent implements ControlValueAccessor {
     }
 
     this.showSuggestions = false;
+  }
+
+  private setSuggestionPosition(): void {
+    if (!this.tagInputElement) {
+      this.suggestionPosition = 'below';
+      return;
+    }
+
+    const rect = this.tagInputElement.nativeElement.getBoundingClientRect();
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    // If more space is available above the input, render the suggestion list above it.
+    this.suggestionPosition = spaceBelow < 240 && spaceAbove > spaceBelow ? 'above' : 'below';
   }
 
   onKeyDown(event: KeyboardEvent): void {

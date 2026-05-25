@@ -16,7 +16,6 @@
 
 .autocomplete-dropdown {
   position: absolute;
-  top: calc(100% - 2px);
   left: 0;
   right: 0;
   z-index: 1100;
@@ -26,6 +25,14 @@
   max-height: 210px;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.autocomplete-dropdown.below {
+  top: calc(100% + 4px);
+}
+
+.autocomplete-dropdown.above {
+  bottom: calc(100% + 4px);
 }
 
 .autocomplete-dropdown ion-item {

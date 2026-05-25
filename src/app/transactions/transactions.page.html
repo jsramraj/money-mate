@@ -98,6 +98,10 @@
             <p *ngIf="item.transaction.type === 'transfer'" class="transfer-subtitle">
               {{ getTransferSubtitle(item) }}
             </p>
+
+            <ion-chip color="primary" *ngFor="let tag of item.transaction.tags || []">
+              {{ tag }}
+            </ion-chip>
           </ion-label>
 
           <span *ngIf="item.transaction.isDirty" class="dirty-dot" aria-label="Unsaved changes"></span>
