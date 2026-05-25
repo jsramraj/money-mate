@@ -408,6 +408,10 @@ export class TransactionFormPage implements OnInit, OnDestroy {
   onDescriptionBlur(event: any) {
     const value = event.target.value;
     this.form.description = this.capitalizeDescription(value);
+
+    setTimeout(() => {
+      this.filteredSuggestions = [];
+    }, 150);
   }
 
   /**

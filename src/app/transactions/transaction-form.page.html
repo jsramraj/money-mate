@@ -43,6 +43,7 @@
       <ion-input
         [(ngModel)]="form.description"
         (ionInput)="filterDescriptionSuggestions($event)"
+        (ionBlur)="onDescriptionBlur($event)"
         placeholder="Enter description"
       ></ion-input>
     </ion-item>
