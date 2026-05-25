@@ -463,4 +463,37 @@ export class TransactionRepository {
     const descriptions = transactions.map(tx => tx.description).filter(desc => !!desc);
     return Array.from(new Set(descriptions)); // Ensure uniqueness
   }
+
+  async getUniqueTags(lastMonths: number): Promise<string[]> {
+    const sinceDate = new Date();
+    sinceDate.setMonth(sinceDate.getMonth() - lastMonths);
+
+    const sinceIso = sinceDate.toISOString();
+    const [dateKeyMatches, stringKeyMatches] = await Promise.all([
+      this.db.transactions.where('date').aboveOrEqual(sinceDate).toArray(),
+      this.db.transactions.where('date').aboveOrEqual(sinceIso).toArray(),
+    ]);
+
+    const transactionsById = new Map<string, Transaction>();
+    [...dateKeyMatches, ...stringKeyMatches].forEach((transaction) => {
+      transactionsById.set(transaction.id, transaction);
+    });
+
+    const tagsMap = new Map<string, string>();
+    Array.from(transactionsById.values()).forEach((transaction) => {
+      (transaction.tags ?? []).forEach((tag) => {
+        const trimmedTag = tag.trim();
+        if (!trimmedTag) {
+          return;
+        }
+
+        const key = trimmedTag.toLowerCase();
+        if (!tagsMap.has(key)) {
+          tagsMap.set(key, trimmedTag);
+        }
+      });
+    });
+
+    return Array.from(tagsMap.values());
+  }
 }

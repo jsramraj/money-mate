@@ -40,6 +40,7 @@ import { AnalyticsService } from '../core/services';
 import { AutoCategorizationService } from '../core/services/auto-categorization.service';
 import { NavController } from '@ionic/angular';
 import { CategoryGridModalComponent } from '../shared/category-grid-selector/category-grid-modal.component';
+import { TagInputComponent } from '../shared/tag-input/tag-input.component';
 
 @Component({
   selector: 'app-transaction-form',
@@ -70,6 +71,7 @@ import { CategoryGridModalComponent } from '../shared/category-grid-selector/cat
     IonNote,
     IonBackButton,
     IonCheckbox,
+    TagInputComponent,
   ],
   templateUrl: './transaction-form.page.html',
   styleUrls: ['./transaction-form.page.scss']
@@ -83,13 +85,13 @@ export class TransactionFormPage implements OnInit, OnDestroy {
   categories: Category[] = [];
   saving = false;
   showMoreOptions = false;
-  tagInput = '';
   @ViewChild('amountInput') private amountInput?: IonInput;
 
   private categoryManuallySelected = false;
   private categoriesSubscription?: Subscription;
   descriptionSuggestions: string[] = [];
   filteredSuggestions: string[] = [];
+  tagSuggestions: string[] = [];
 
   get isEditMode(): boolean {
     return !!this.transactionToEdit;
@@ -170,6 +172,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
 
     // Fetch unique descriptions from the last 6 months
     this.descriptionSuggestions = await this.transactionRepository.getUniqueDescriptions(6);
+    this.tagSuggestions = await this.transactionRepository.getUniqueTags(12);
 
     const lastUsedAccountId = this.getLastUsedAccountId();
     const hasLastUsedAccount = !!lastUsedAccountId && this.accounts.some((account) => account.id === lastUsedAccountId);
@@ -198,24 +201,6 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     }, 50);
   }
 
-  onTagBlur(): void {
-    if (this.tagInput.trim()) {
-      this.addTag();
-    }
-  }
-
-    onTagChange(): void {
-    // If the user types a comma, treat it as a tag separator
-    if (this.tagInput && this.tagInput.includes(',')) {
-      const tags = this.tagInput.split(',').map(t => t.trim()).filter(t => t);
-      for (const tag of tags) {
-        if (tag && !this.form.tags.includes(tag)) {
-          this.form.tags = [...this.form.tags, tag];
-        }
-      }
-      this.tagInput = '';
-    }
-  }
   async openCategoryModal(): Promise<void> {
     if (this.saving) return;
 
@@ -311,15 +296,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     this.form.description = '';
     this.form.notes = '';
     this.form.tags = [];
-    this.tagInput = '';
     this.categoryManuallySelected = false;
-  }
-
-  onTagKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' || event.key === ',') {
-      event.preventDefault();
-      this.addTag();
-    }
   }
 
   onDateChange(event: CustomEvent<{ value?: string | string[] | null }>): void {
@@ -327,14 +304,6 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     if (typeof value === 'string' && value) {
       this.form.date = value.slice(0, 10);
     }
-  }
-
-  addTag(): void {
-    const tag = this.tagInput.trim().replace(/,+$/, '');
-    if (tag && !this.form.tags.includes(tag)) {
-      this.form.tags = [...this.form.tags, tag];
-    }
-    this.tagInput = '';
   }
 
   removeTag(tag: string): void {
@@ -350,11 +319,6 @@ export class TransactionFormPage implements OnInit, OnDestroy {
 
   async save(): Promise<void> {
     if (!this.canSave || this.saving) return;
-
-    // Flush any pending tag in the input
-    if (this.tagInput.trim()) {
-      this.addTag();
-    }
 
     this.saving = true;
     this.categoryManuallySelected = false;
@@ -405,7 +369,6 @@ export class TransactionFormPage implements OnInit, OnDestroy {
           notes: '',
           tags: []
         };
-        this.tagInput = '';
         this.showMoreOptions = false;
         // Show a toast to confirm
         await this.presentToast('Saved!');

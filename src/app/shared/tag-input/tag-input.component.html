@@ -1,0 +1,35 @@
+<div class="tag-input-wrapper">
+  <div class="tag-chip-list" *ngIf="value.length > 0">
+     <ion-chip *ngFor="let tag of value; let index = index"
+        color="primary"
+        (click)="removeTagAt(index)"
+        outline>
+        <ion-label>{{tag}}</ion-label>
+        <ion-icon name="close-circle"></ion-icon>
+    </ion-chip>
+  </div>
+
+  <ion-item lines="none" class="tag-input-item">
+    <ion-input
+      [(ngModel)]="inputValue"
+      [placeholder]="placeholder"
+      [disabled]="disabled"
+      (ionInput)="onInput($event)"
+      (ionFocus)="onFocus()"
+      (click)="onClick()"
+      (ionBlur)="onBlur()"
+      (keydown)="onKeyDown($event)"
+      (paste)="onPaste($event)"
+    ></ion-input>
+  </ion-item>
+
+  <ion-list *ngIf="autocomplete && showSuggestions && filteredSuggestions.length > 0" class="autocomplete-dropdown">
+    <ion-item
+      *ngFor="let suggestion of filteredSuggestions; let i = index"
+      (click)="selectSuggestion(suggestion)"
+      [class.active]="i === selectedSuggestionIndex"
+    >
+      {{ suggestion }}
+    </ion-item>
+  </ion-list>
+</div>

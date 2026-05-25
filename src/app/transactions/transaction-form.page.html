@@ -105,31 +105,17 @@
     </ion-item>
 
     <ng-container *ngIf="form.type !== 'transfer' && showMoreOptions">
-      <ion-item>
+      <ion-item lines="none">
         <ion-label position="stacked">Tags</ion-label>
-        <ion-input
-          [(ngModel)]="tagInput"
-          placeholder="Type tags (use commas to separate)"
-          (keydown)="onTagKeydown($event)"
-          (ionBlur)="onTagBlur()"
-          (ionChange)="onTagChange()"
-        ></ion-input>
       </ion-item>
-      <ion-item lines="none" *ngIf="form.tags.length > 0">
-        <div style="display:flex; flex-wrap:wrap; gap:6px; padding: 4px 0; width:100%;">
-          <ion-chip
-            *ngFor="let tag of form.tags"
-            (click)="removeTag(tag)"
-            style="cursor:pointer;"
-          >
-            {{ tag }}
-            <ion-icon name="close-circle" style="margin-left:4px;"></ion-icon>
-          </ion-chip>
-        </div>
-      </ion-item>
-      <ion-item lines="none" *ngIf="form.tags.length === 0">
-        <ion-note style="padding: 4px 0;">No tags added yet</ion-note>
-      </ion-item>
+
+      <app-tag-input
+        [(ngModel)]="form.tags"
+        [autocomplete]="true"
+        [autocompleteItems]="tagSuggestions"
+        [autocompleteMustMatch]="false"
+        placeholder="Type tags (use commas to separate)"
+      ></app-tag-input>
 
       <ion-item>
         <ion-label position="stacked">Notes</ion-label>
