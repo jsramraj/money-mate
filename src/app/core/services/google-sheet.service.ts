@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { GoogleSheetsDbService } from './google-sheets-db.service';
-import { Account, Budget, Category, GUEST_USER_NAME, Transaction } from '../database/models';
+import { Account, Budget, Category, GUEST_USER_NAME, RecurringPayment, Transaction } from '../database/models';
 import { AccountRepository, BudgetRepository, CategoryRepository, TransactionRepository } from '../database/repositories';
 import { DatabaseService, CURRENT_SCHEMA_VERSION } from '../database/database.service';
 
@@ -23,11 +23,12 @@ export class GoogleSheetService {
   ) {}
 
   async importAllFromSheetToLocal(): Promise<void> {
-    const [accountsRows, categoriesRows, transactionsRows, budgetsRows] = await Promise.all([
+    const [accountsRows, categoriesRows, transactionsRows, budgetsRows, recurringPaymentsRows] = await Promise.all([
       this.getValuesOrEmpty('accounts!A:M'),
       this.getValuesOrEmpty('categories!A:K'),
       this.getValuesOrEmpty('transactions!A:P'),
       this.getValuesOrEmpty('budgets!A:P'),
+      this.getValuesOrEmpty('recurringPayments!A:Q'),
     ]);
 
     const accounts = accountsRows
@@ -54,12 +55,19 @@ export class GoogleSheetService {
       .filter((budget): budget is Budget => !!budget)
       .map((budget) => ({ ...budget, isDirty: false }));
 
-    await this.db.transaction('rw', this.db.accounts, this.db.categories, this.db.transactions, this.db.budgets, async () => {
+    const recurringPayments = recurringPaymentsRows
+      .slice(1)
+      .map((row) => this.parseSheetRecurringPayment(row))
+      .filter((rp): rp is RecurringPayment => !!rp)
+      .map((rp) => ({ ...rp, isDirty: false }));
+
+    await this.db.transaction('rw', [this.db.accounts, this.db.categories, this.db.transactions, this.db.budgets, this.db.recurringPayments], async () => {
       await this.db.runWithoutDirtyTracking(async () => {
         await this.db.transactions.clear();
         await this.db.accounts.clear();
         await this.db.categories.clear();
         await this.db.budgets.clear();
+        await this.db.recurringPayments.clear();
 
         if (accounts.length > 0) {
           await this.db.accounts.bulkPut(accounts);
@@ -75,6 +83,10 @@ export class GoogleSheetService {
 
         if (budgets.length > 0) {
           await this.db.budgets.bulkPut(budgets);
+        }
+
+        if (recurringPayments.length > 0) {
+          await this.db.recurringPayments.bulkPut(recurringPayments);
         }
       });
     });
@@ -562,6 +574,85 @@ export class GoogleSheetService {
     await this.transactionRepository.clearDirtyFlags(pushedIds);
   }
 
+  async syncRecurringPayments(): Promise<void> {
+    const sheetRows = await this.googleSheetsDbService.getValues('recurringPayments!A:Q');
+    const rowsWithoutHeader = sheetRows.slice(1);
+    const localRecurringPayments = await this.db.recurringPayments.toArray();
+
+    const sheetById = new Map<string, { recurringPayment: RecurringPayment; rowNumber: number }>();
+    rowsWithoutHeader.forEach((row, index) => {
+      const parsed = this.parseSheetRecurringPayment(row);
+      if (!parsed) {
+        return;
+      }
+
+      sheetById.set(parsed.id, {
+        recurringPayment: parsed,
+        rowNumber: index + 2,
+      });
+    });
+
+    const localById = new Map(localRecurringPayments.map((rp) => [rp.id, rp]));
+
+    for (const [id, sheetRecord] of sheetById.entries()) {
+      const localRecord = localById.get(id);
+      if (!localRecord) {
+        await this.db.recurringPayments.put({ ...sheetRecord.recurringPayment, isDirty: false });
+        continue;
+      }
+
+      const localUpdatedAt = new Date(localRecord.updatedAt).getTime();
+      const sheetUpdatedAt = new Date(sheetRecord.recurringPayment.updatedAt).getTime();
+      if (sheetUpdatedAt > localUpdatedAt && !localRecord.isDirty) {
+        await this.db.recurringPayments.put({ ...sheetRecord.recurringPayment, isDirty: false });
+      }
+    }
+
+    const dirtyRecurringPayments = await this.db.recurringPayments.filter((rp) => !!rp.isDirty).toArray();
+    const pushedIds: string[] = [];
+    const updateRequests: Array<{ range: string; values: string[][] }> = [];
+    const rowsToAppend: string[][] = [];
+
+    for (const recurringPayment of dirtyRecurringPayments) {
+      const rowValues = this.toSheetRecurringPaymentRow(recurringPayment);
+      const existing = sheetById.get(recurringPayment.id);
+
+      if (existing) {
+        updateRequests.push({
+          range: `recurringPayments!A${existing.rowNumber}:Q${existing.rowNumber}`,
+          values: [rowValues],
+        });
+      } else {
+        rowsToAppend.push(rowValues);
+      }
+
+      pushedIds.push(recurringPayment.id);
+    }
+
+    if (updateRequests.length > 0) {
+      await this.googleSheetsDbService.batchUpdateValues(updateRequests);
+    }
+
+    if (rowsToAppend.length > 0) {
+      await this.googleSheetsDbService.appendValues(
+        'recurringPayments!A:Q',
+        rowsToAppend,
+      );
+    }
+
+    // Clear dirty flags
+    if (pushedIds.length > 0) {
+      await this.db.transaction('rw', this.db.recurringPayments, async () => {
+        for (const id of pushedIds) {
+          const rp = await this.db.recurringPayments.get(id);
+          if (rp) {
+            await this.db.recurringPayments.update(id, { isDirty: false });
+          }
+        }
+      });
+    }
+  }
+
   private parseSheetCategory(row: string[]): Category | null {
     if (!row[0]) {
       return null;
@@ -611,6 +702,38 @@ export class GoogleSheetService {
       createdBy: row[13] || GUEST_USER_NAME,
       updatedBy: row[14] || row[13] || GUEST_USER_NAME,
       recurringPaymentId: row[15] || undefined,
+      isDirty: false,
+    };
+  }
+
+  private parseSheetRecurringPayment(row: string[]): RecurringPayment | null {
+    if (!row[0]) {
+      return null;
+    }
+
+    const amount = Number(row[2] || 0);
+    const type = this.parseTransactionType(row[3], amount);
+    const frequency = this.parseRecurringPaymentFrequency(row[10]);
+    const status = this.parseRecurringPaymentStatus(row[11]);
+
+    return {
+      id: row[0],
+      accountId: row[1] || '',
+      amount,
+      type,
+      categoryId: row[4] || '',
+      description: row[5] || '',
+      date: this.parseDate(row[6]),
+      notes: row[7] || '',
+      tags: this.parseTags(row[8]),
+      transferToAccountId: row[9] || undefined,
+      frequency,
+      status,
+      isDeleted: row[12] === 'true',
+      createdAt: this.parseDate(row[13]),
+      updatedAt: this.parseDate(row[14]),
+      createdBy: row[15] || GUEST_USER_NAME,
+      updatedBy: row[16] || row[15] || GUEST_USER_NAME,
       isDirty: false,
     };
   }
@@ -727,6 +850,28 @@ export class GoogleSheetService {
     ];
   }
 
+  private toSheetRecurringPaymentRow(recurringPayment: RecurringPayment): string[] {
+    return [
+      recurringPayment.id,
+      recurringPayment.accountId,
+      String(recurringPayment.amount),
+      recurringPayment.type,
+      recurringPayment.categoryId,
+      recurringPayment.description,
+      this.toIso(recurringPayment.date),
+      recurringPayment.notes || '',
+      JSON.stringify(recurringPayment.tags || []),
+      recurringPayment.transferToAccountId || '',
+      recurringPayment.frequency,
+      recurringPayment.status,
+      String(!!recurringPayment.isDeleted),
+      this.toIso(recurringPayment.createdAt),
+      this.toIso(recurringPayment.updatedAt),
+      recurringPayment.createdBy || GUEST_USER_NAME,
+      recurringPayment.updatedBy || recurringPayment.createdBy || GUEST_USER_NAME,
+    ];
+  }
+
   private toSheetBudgetRow(budget: Budget): string[] {
     return [
       budget.id,
@@ -792,6 +937,27 @@ export class GoogleSheetService {
         return value;
       default:
         return 'monthly';
+    }
+  }
+
+  private parseRecurringPaymentFrequency(value: string | undefined): RecurringPayment['frequency'] {
+    switch (value) {
+      case 'week':
+      case 'month':
+      case 'year':
+        return value;
+      default:
+        return 'month';
+    }
+  }
+
+  private parseRecurringPaymentStatus(value: string | undefined): RecurringPayment['status'] {
+    switch (value) {
+      case 'active':
+      case 'inactive':
+        return value;
+      default:
+        return 'active';
     }
   }
 

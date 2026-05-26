@@ -435,6 +435,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
       await this.googleSheetService.syncAccounts();
       await this.googleSheetService.syncCategories();
       await this.googleSheetService.syncBudgets();
+      await this.googleSheetService.syncRecurringPayments();
       await this.refreshLookups();
       await this.transactionRepository.getAllTransactions();
       this.analyticsService.trackEvent('sync_transactions', { status: 'success' });
