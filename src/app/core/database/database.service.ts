@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import Dexie, { Table } from 'dexie';
 import { Account, Budget, Category, GUEST_USER_NAME, RecurringPayment, Transaction } from './models';
 
+export const CURRENT_SCHEMA_VERSION = 3;
+
 @Injectable({
   providedIn: 'root'
 })

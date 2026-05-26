@@ -426,6 +426,9 @@ export class TransactionsPage implements OnInit, OnDestroy {
         dirty_count: this.allTransactions.filter((transaction) => !!transaction.isDirty).length,
       });
 
+      // Migrate sheet schema if needed before syncing
+      await this.googleSheetService.migrateSheetSchemaIfNeeded();
+
       // Sync transactions first so balance deltas are applied locally,
       // then sync accounts so corrected balances are pushed to the sheet.
       await this.googleSheetService.syncTransactions();

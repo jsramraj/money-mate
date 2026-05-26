@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { GoogleSheetsDbService } from './google-sheets-db.service';
 import { Account, Budget, Category, GUEST_USER_NAME, Transaction } from '../database/models';
 import { AccountRepository, BudgetRepository, CategoryRepository, TransactionRepository } from '../database/repositories';
-import { DatabaseService } from '../database/database.service';
+import { DatabaseService, CURRENT_SCHEMA_VERSION } from '../database/database.service';
 
 export interface SpreadsheetSummary {
   id: string;
@@ -26,7 +26,7 @@ export class GoogleSheetService {
     const [accountsRows, categoriesRows, transactionsRows, budgetsRows] = await Promise.all([
       this.getValuesOrEmpty('accounts!A:M'),
       this.getValuesOrEmpty('categories!A:K'),
-      this.getValuesOrEmpty('transactions!A:O'),
+      this.getValuesOrEmpty('transactions!A:P'),
       this.getValuesOrEmpty('budgets!A:P'),
     ]);
 
@@ -98,6 +98,8 @@ export class GoogleSheetService {
       'budgets',
       'categories',
       'transactions',
+      '_meta',
+      'recurringPayments',
     ]);
 
     return {
@@ -181,6 +183,7 @@ export class GoogleSheetService {
           'updatedAt',
           'createdBy',
           'updatedBy',
+          'recurringPaymentId',
         ]],
       },
       {
@@ -192,6 +195,42 @@ export class GoogleSheetService {
           'From Account',
           'To Account',
           'Category',
+        ]],
+      },
+      {
+        range: '_meta!A1',
+        values: [[
+          'key',
+          'value',
+        ]],
+      },
+      {
+        range: '_meta!A2',
+        values: [[
+          'schemaVersion',
+          '3',
+        ]],
+      },
+      {
+        range: 'recurringPayments!A1',
+        values: [[
+          'id',
+          'accountId',
+          'amount',
+          'type',
+          'categoryId',
+          'description',
+          'date',
+          'notes',
+          'tags',
+          'transferToAccountId',
+          'frequency',
+          'status',
+          'isDeleted',
+          'createdAt',
+          'updatedAt',
+          'createdBy',
+          'updatedBy',
         ]],
       },
     
@@ -455,7 +494,7 @@ export class GoogleSheetService {
   }
 
   async syncTransactions(): Promise<void> {
-    const sheetRows = await this.googleSheetsDbService.getValues('transactions!A:O');
+    const sheetRows = await this.googleSheetsDbService.getValues('transactions!A:P');
     const rowsWithoutHeader = sheetRows.slice(1);
     const localTransactions = await this.transactionRepository.getAllTransactions();
 
@@ -499,7 +538,7 @@ export class GoogleSheetService {
 
       if (existing) {
         updateRequests.push({
-          range: `transactions!A${existing.rowNumber}:O${existing.rowNumber}`,
+          range: `transactions!A${existing.rowNumber}:P${existing.rowNumber}`,
           values: [rowValues],
         });
       } else {
@@ -515,7 +554,7 @@ export class GoogleSheetService {
 
     if (rowsToAppend.length > 0) {
       await this.googleSheetsDbService.appendValues(
-        'transactions!A:O',
+        'transactions!A:P',
         rowsToAppend,
       );
     }
@@ -571,6 +610,7 @@ export class GoogleSheetService {
       updatedAt: this.parseDate(row[12]),
       createdBy: row[13] || GUEST_USER_NAME,
       updatedBy: row[14] || row[13] || GUEST_USER_NAME,
+      recurringPaymentId: row[15] || undefined,
       isDirty: false,
     };
   }
@@ -683,6 +723,7 @@ export class GoogleSheetService {
       this.toIso(transaction.updatedAt),
       transaction.createdBy || GUEST_USER_NAME,
       transaction.updatedBy || transaction.createdBy || GUEST_USER_NAME,
+      transaction.recurringPaymentId || '',
     ];
   }
 
@@ -846,5 +887,163 @@ export class GoogleSheetService {
 
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+
+  /**
+   * Get the schema version from the _meta sheet.
+   * Returns 0 if the _meta sheet doesn't exist (legacy spreadsheets).
+   */
+  async getSheetSchemaVersion(): Promise<number> {
+    try {
+      const metaRows = await this.googleSheetsDbService.getValues('_meta!A:B');
+      
+      // Find the row where column A = 'schemaVersion'
+      const versionRow = metaRows.find(row => row[0] === 'schemaVersion');
+      
+      if (versionRow && versionRow[1]) {
+        const version = Number(versionRow[1]);
+        return Number.isFinite(version) ? version : 0;
+      }
+      
+      return 0;
+    } catch (error) {
+      // _meta sheet doesn't exist (legacy spreadsheet)
+      return 0;
+    }
+  }
+
+  /**
+   * Check if the sheet schema version is compatible with the local database version.
+   * Returns compatibility info including whether migration is needed.
+   */
+  async checkSchemaCompatibility(): Promise<{
+    compatible: boolean;
+    sheetVersion: number;
+    localVersion: number;
+    needsMigration: boolean;
+  }> {
+    const sheetVersion = await this.getSheetSchemaVersion();
+    const localVersion = this.db.verno;
+    
+    return {
+      compatible: sheetVersion === localVersion,
+      sheetVersion,
+      localVersion,
+      needsMigration: sheetVersion < localVersion && sheetVersion > 0,
+    };
+  }
+
+  /**
+   * Migrates the spreadsheet schema if needed during sync operations.
+   * Runs automatically before sync to ensure sheet structure matches app version.
+   */
+  async migrateSheetSchemaIfNeeded(): Promise<void> {
+    const compatibility = await this.checkSchemaCompatibility();
+    
+    // Already at current version
+    if (compatibility.compatible) {
+      return;
+    }
+    
+    // Legacy spreadsheet (no _meta sheet) - migrate from v0 to v3
+    if (compatibility.sheetVersion === 0) {
+      console.log('Migrating legacy spreadsheet to schema v3...');
+      await this.migrateFromV0ToV3();
+      return;
+    }
+    
+    // Future: Handle incremental migrations (v1->v2, v2->v3, etc.)
+    if (compatibility.needsMigration) {
+      console.log(`Migrating sheet from v${compatibility.sheetVersion} to v${compatibility.localVersion}...`);
+      
+      // For now, only v0->v3 is implemented
+      // Add more migration paths here as needed
+      if (compatibility.sheetVersion < 3 && compatibility.localVersion >= 3) {
+        await this.migrateToV3(compatibility.sheetVersion);
+      }
+    }
+  }
+
+  /**
+   * Migrate legacy spreadsheet (no _meta) from v0 to v3.
+   * Adds _meta sheet, recurringPayments sheet, and recurringPaymentId column to transactions.
+   */
+  private async migrateFromV0ToV3(): Promise<void> {
+    const updates: Array<{ range: string; values: string[][] }> = [];
+    
+    // Step 1: Add _meta and recurringPayments sheets
+    try {
+      await this.googleSheetsDbService.addSheets(['_meta', 'recurringPayments']);
+    } catch (error) {
+      console.warn('Failed to add sheets (may already exist):', error);
+      // Continue with migration even if sheets exist
+    }
+    
+    // Step 2: Initialize _meta sheet with schema version
+    updates.push(
+      {
+        range: '_meta!A1',
+        values: [['key', 'value']],
+      },
+      {
+        range: '_meta!A2',
+        values: [['schemaVersion', '3']],
+      }
+    );
+    
+    // Step 3: Initialize recurringPayments sheet with headers
+    updates.push({
+      range: 'recurringPayments!A1',
+      values: [[
+        'id',
+        'accountId',
+        'amount',
+        'type',
+        'categoryId',
+        'description',
+        'date',
+        'notes',
+        'tags',
+        'transferToAccountId',
+        'frequency',
+        'status',
+        'isDeleted',
+        'createdAt',
+        'updatedAt',
+        'createdBy',
+        'updatedBy',
+      ]],
+    });
+    
+    // Step 4: Update transactions header to add recurringPaymentId column
+    const existingTransactionsHeader = await this.googleSheetsDbService.getValues('transactions!A1:O1');
+    if (existingTransactionsHeader.length > 0) {
+      const updatedHeader = [...existingTransactionsHeader[0], 'recurringPaymentId'];
+      updates.push({
+        range: 'transactions!A1',
+        values: [updatedHeader],
+      });
+    }
+    
+    // Apply all updates
+    await this.googleSheetsDbService.batchUpdateValues(updates);
+    
+    console.log('Successfully migrated spreadsheet to schema v3');
+  }
+
+  /**
+   * Migrate from any version < 3 to v3.
+   * For incremental migrations: v1->v2->v3.
+   */
+  private async migrateToV3(fromVersion: number): Promise<void> {
+    // For now, treat any version < 3 the same as v0
+    // In the future, add specific migration paths per version
+    await this.migrateFromV0ToV3();
+    
+    // Update version in _meta
+    await this.googleSheetsDbService.batchUpdateValues([{
+      range: '_meta!A2',
+      values: [['schemaVersion', '3']],
+    }]);
   }
 }
