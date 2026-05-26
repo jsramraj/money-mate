@@ -13,6 +13,7 @@ export interface CreateTransactionInput {
   notes?: string;
   tags?: string[];
   transferToAccountId?: string;
+  recurringPaymentId?: string;
 }
 
 export interface UpdateTransactionInput extends CreateTransactionInput {
@@ -72,6 +73,7 @@ export class TransactionRepository {
       notes: input.notes,
       tags: input.tags ?? [],
       transferToAccountId: input.transferToAccountId,
+      recurringPaymentId: input.recurringPaymentId,
       isDeleted: false,
       createdAt: now,
       updatedAt: now,
@@ -131,20 +133,21 @@ export class TransactionRepository {
     }
 
     const updated: Transaction = {
-      ...oldTx,
-      accountId: input.accountId,
-      amount: storedAmount,
-      type: input.type,
-      categoryId: input.categoryId,
-      description: input.description,
-      date: input.date,
-      notes: input.notes,
-      tags: input.tags ?? [],
-      transferToAccountId: input.type === 'transfer' ? input.transferToAccountId : undefined,
-      isDeleted: input.isDeleted ?? false,
-      updatedAt: now,
-      updatedBy: GUEST_USER_NAME,
-    };
+        ...oldTx,
+        accountId: input.accountId,
+        amount: storedAmount,
+        type: input.type,
+        categoryId: input.categoryId,
+        description: input.description,
+        date: input.date,
+        notes: input.notes,
+        tags: input.tags ?? [],
+        transferToAccountId: input.type === 'transfer' ? input.transferToAccountId : undefined,
+        recurringPaymentId: input.recurringPaymentId,
+        isDeleted: input.isDeleted ?? false,
+        updatedAt: now,
+        updatedBy: GUEST_USER_NAME,
+      };
 
     await this.db.transaction('rw', [this.db.transactions, this.db.accounts], async () => {
       // Reverse old transaction's balance effect

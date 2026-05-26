@@ -100,12 +100,21 @@
       <ion-datetime-button style="margin-top: 6px;" datetime="transaction-date"></ion-datetime-button>
     </ion-item>
 
-    <ion-item button detail="false" *ngIf="form.type !== 'transfer'" (click)="showMoreOptions = !showMoreOptions">
+    <ion-item button detail="false" (click)="showMoreOptions = !showMoreOptions">
       <ion-label>{{ showMoreOptions ? 'Hide More options' : 'More options' }}</ion-label>
       <ion-icon slot="end" [name]="showMoreOptions ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
     </ion-item>
 
-    <ng-container *ngIf="form.type !== 'transfer' && showMoreOptions">
+    <ng-container *ngIf="showMoreOptions">
+      <ion-item>
+        <ion-label position="stacked">Recurring</ion-label>
+        <ion-select [(ngModel)]="form.recurrenceSelection" interface="action-sheet" [disabled]="isEditMode">
+          <ion-select-option value="never">Never</ion-select-option>
+          <ion-select-option value="monthly">Monthly</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ng-container *ngIf="form.type !== 'transfer'">
       <ion-item lines="none">
         <ion-label position="stacked">Tags</ion-label>
       </ion-item>
@@ -126,6 +135,7 @@
           rows="3"
         ></ion-textarea>
       </ion-item>
+      </ng-container>
     </ng-container>
 
     <ion-item *ngIf="!isEditMode">
