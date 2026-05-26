@@ -40,6 +40,7 @@ import { AnalyticsService } from '../core/services';
 import { AutoCategorizationService } from '../core/services/auto-categorization.service';
 import { NavController } from '@ionic/angular';
 import { CategoryGridModalComponent } from '../shared/category-grid-selector/category-grid-modal.component';
+import { RecurringPaymentSummaryComponent } from '../shared/recurring-payment-summary/recurring-payment-summary.component';
 import { TagInputComponent } from '../shared/tag-input/tag-input.component';
 import { DatabaseService } from '../core/database/database.service';
 
@@ -73,6 +74,7 @@ import { DatabaseService } from '../core/database/database.service';
     IonBackButton,
     IonCheckbox,
     TagInputComponent,
+    RecurringPaymentSummaryComponent,
   ],
   templateUrl: './transaction-form.page.html',
   styleUrls: ['./transaction-form.page.scss']
@@ -93,6 +95,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
   descriptionSuggestions: string[] = [];
   filteredSuggestions: string[] = [];
   tagSuggestions: string[] = [];
+  recurringPaymentDetails: RecurringPayment | null = null;
 
   get isEditMode(): boolean {
     return !!this.transactionToEdit;
@@ -165,7 +168,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
       const tx = await this.transactionRepository.getTransactionById(id);
       if (tx) {
         this.transactionToEdit = tx;
-        this.populateFormFromTransaction(tx);
+        await this.populateFormFromTransaction(tx);
         return;
       }
     } else {
@@ -257,7 +260,16 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     }, 500);
   }
 
-  private populateFormFromTransaction(tx: Transaction): void {
+  private async populateFormFromTransaction(tx: Transaction): Promise<void> {
+    this.recurringPaymentDetails = tx.recurringPaymentId
+      ? await this.db.recurringPayments.get(tx.recurringPaymentId) ?? null
+      : null;
+
+    const recurrenceSelection: RecurrenceSelection =
+      this.recurringPaymentDetails?.frequency === 'month' || tx.recurringPaymentId
+        ? 'monthly'
+        : 'never';
+
     const date = new Date(tx.date);
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -265,7 +277,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
 
     this.form = {
       type: tx.type,
-      recurrenceSelection: tx.recurringPaymentId ? 'monthly' : 'never',
+      recurrenceSelection,
       amount: Math.abs(tx.amount),
       accountId: tx.accountId,
       transferToAccountId: tx.transferToAccountId ?? '',

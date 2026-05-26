@@ -1,0 +1,32 @@
+.recurring-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--ion-color-light);
+  border: 1px solid var(--ion-color-light-shade);
+  color: var(--ion-text-color);
+  font-size: 0.92rem;
+  line-height: 1.3;
+}
+
+.recurring-summary ion-icon:first-child {
+  color: var(--ion-color-primary);
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.recurring-summary--single ion-icon:first-child {
+  color: var(--ion-color-medium);
+}
+
+.recurring-summary--inactive {
+  border-color: var(--ion-color-warning-tint);
+  background: var(--ion-color-warning-contrast);
+}
+
+.recurring-summary span {
+  flex: 1;
+}

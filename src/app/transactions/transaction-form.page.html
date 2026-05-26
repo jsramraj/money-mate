@@ -108,10 +108,16 @@
     <ng-container *ngIf="showMoreOptions">
       <ion-item>
         <ion-label position="stacked">Recurring</ion-label>
-        <ion-select [(ngModel)]="form.recurrenceSelection" interface="action-sheet" [disabled]="isEditMode">
+        <ion-select *ngIf="!isEditMode" [(ngModel)]="form.recurrenceSelection" interface="action-sheet">
           <ion-select-option value="never">Never</ion-select-option>
           <ion-select-option value="monthly">Monthly</ion-select-option>
         </ion-select>
+
+        <app-recurring-payment-summary
+          *ngIf="isEditMode"
+          [recurrenceSelection]="form.recurrenceSelection"
+          [recurringPayment]="recurringPaymentDetails"
+        ></app-recurring-payment-summary>
       </ion-item>
 
       <ng-container *ngIf="form.type !== 'transfer'">
