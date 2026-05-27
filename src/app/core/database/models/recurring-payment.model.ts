@@ -2,7 +2,7 @@ import { AuditableEntity } from './common.types';
 import { TransactionType } from './transaction.model';
 
 export type RecurringPaymentFrequency = 'week' | 'month' | 'year';
-export type RecurringPaymentStatus = 'active' | 'inactive';
+export type RecurringPaymentStatus = 'active' | 'paused' | 'cancelled';
 
 export interface RecurringPayment extends AuditableEntity {
   accountId: string;

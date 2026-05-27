@@ -23,9 +23,14 @@
   color: var(--ion-color-medium);
 }
 
-.recurring-summary--inactive {
+.recurring-summary--paused {
   border-color: var(--ion-color-warning-tint);
   background: var(--ion-color-warning-contrast);
+}
+
+.recurring-summary--cancelled {
+  border-color: var(--ion-color-danger-tint);
+  background: var(--ion-color-danger-contrast);
 }
 
 .recurring-summary span {

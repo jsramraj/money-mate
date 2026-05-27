@@ -954,7 +954,8 @@ export class GoogleSheetService {
   private parseRecurringPaymentStatus(value: string | undefined): RecurringPayment['status'] {
     switch (value) {
       case 'active':
-      case 'inactive':
+      case 'paused':
+      case 'cancelled':
         return value;
       default:
         return 'active';

@@ -1,0 +1,47 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/settings"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Recurring Payments</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="container">
+    <div class="loading-state" *ngIf="loading">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading recurring payments...</p>
+    </div>
+
+    <div class="error-state" *ngIf="!loading && error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && !error && visibleRecurringPayments.length === 0">
+      <ion-icon name="repeat-outline"></ion-icon>
+      <h2>No recurring payments</h2>
+      <p>Active or paused recurring payments will appear here.</p>
+    </div>
+
+    <ion-list *ngIf="!loading && !error && visibleRecurringPayments.length > 0">
+      <ion-item
+        button
+        detail="true"
+        class="recurring-list-item"
+        *ngFor="let recurringPayment of visibleRecurringPayments; trackBy: trackByRecurringPaymentId"
+        (click)="openEditPage(recurringPayment)">
+        <ion-label>
+          <h2>{{ recurringPayment.description || 'Untitled recurring payment' }}</h2>
+          <p class="amount-line">
+            {{ getDisplayAmount(recurringPayment.amount) | currency:selectedCurrency:'symbol':'1.0-2' }} / {{ getFrequencyLabel(recurringPayment.frequency) }}
+          </p>
+          <p class="next-line">Next: {{ recurringPayment.date | date:'MMM d' }}</p>
+          <p class="meta-line">{{ getAccountName(recurringPayment.accountId) }} • {{ getCategoryName(recurringPayment) }}</p>
+        </ion-label>
+
+        <ion-badge [color]="getStatusColor(recurringPayment.status)">{{ getStatusLabel(recurringPayment.status) }}</ion-badge>
+      </ion-item>
+    </ion-list>
+  </div>
+</ion-content>
