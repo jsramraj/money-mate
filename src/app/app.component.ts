@@ -107,6 +107,7 @@ export class AppComponent {
     const pageTitles: Record<string, string> = {
       '/login': 'Login',
       '/onboarding': 'Google Sheet Onboarding',
+      '/startup/recurring-review': 'Recurring Payments Due',
       '/tabs/dashboard': 'Dashboard',
       '/tabs/transactions': 'Transactions',
       '/tabs/transactions/form': 'New Transaction',

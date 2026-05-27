@@ -89,6 +89,10 @@ export const routes: Routes = [
     loadComponent: () => import('./imports').then((m) => m.TransactionQuickAddPage),
   },
   {
+    path: 'startup/recurring-review',
+    loadComponent: () => import('./startup/recurring-startup-review.page').then((m) => m.RecurringStartupReviewPage),
+  },
+  {
     path: 'dashboard/customize',
     loadComponent: () => import('./dashboard/dashboard-customize.page').then((m) => m.DashboardCustomizePage),
   },

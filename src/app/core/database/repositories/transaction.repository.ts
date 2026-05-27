@@ -25,6 +25,7 @@ export interface TransactionQueryFilters {
   accountIds?: string[];
   types?: TransactionType[];
   categoryIds?: string[];
+  recurringPaymentIds?: string[];
 }
 
 export interface TransactionDateRange {
@@ -261,6 +262,26 @@ export class TransactionRepository {
     }
   }
 
+  async getTransactionsByRecurringPaymentIdsInDateRange(
+    recurringPaymentIds: string[],
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Transaction[]> {
+    if (recurringPaymentIds.length === 0) {
+      return [];
+    }
+
+    try {
+      return await this.queryTransactions(
+        { recurringPaymentIds },
+        { dateRange: { startDate, endDate } },
+      );
+    } catch (error) {
+      console.error('Error fetching transactions by recurring payment ids and date range:', error);
+      throw new Error('Failed to fetch recurring payment transactions for date range');
+    }
+  }
+
   async queryTransactions(
     filters: TransactionQueryFilters = {},
     options: TransactionQueryOptions = {}
@@ -270,6 +291,7 @@ export class TransactionRepository {
         accountIds,
         types,
         categoryIds,
+        recurringPaymentIds,
       } = filters;
       const {
         limit,
@@ -281,6 +303,7 @@ export class TransactionRepository {
       const accountIdSet = accountIds?.length ? new Set(accountIds) : null;
       const typeSet = types?.length ? new Set(types) : null;
       const categoryIdSet = categoryIds?.length ? new Set(categoryIds) : null;
+      const recurringPaymentIdSet = recurringPaymentIds?.length ? new Set(recurringPaymentIds) : null;
 
       const collection = dateRange
         ? this.db.transactions.where('date').between(dateRange.startDate, dateRange.endDate, true, true)
@@ -301,6 +324,10 @@ export class TransactionRepository {
           }
 
           if (categoryIdSet && !categoryIdSet.has(transaction.categoryId)) {
+            return false;
+          }
+
+          if (recurringPaymentIdSet && (!transaction.recurringPaymentId || !recurringPaymentIdSet.has(transaction.recurringPaymentId))) {
             return false;
           }
 
