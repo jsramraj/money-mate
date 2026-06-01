@@ -166,7 +166,7 @@ export class RecurringPaymentDetailPage {
     try {
       this.saving = true;
       const nextStatus = this.statusValue;
-      const normalizedAmount = this.toStoredAmount(Number(this.amountValue), this.recurringPayment.type);
+      const normalizedAmount = Math.abs(Number(this.amountValue));
 
       await this.db.recurringPayments.update(this.recurringPayment.id, {
         description: this.descriptionValue.trim(),
@@ -235,14 +235,6 @@ export class RecurringPaymentDetailPage {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  }
-
-  private toStoredAmount(amount: number, type: RecurringPayment['type']): number {
-    if (type === 'expense') {
-      return -Math.abs(amount);
-    }
-
-    return Math.abs(amount);
   }
 
   private async presentToast(message: string, color: 'success' | 'danger'): Promise<void> {

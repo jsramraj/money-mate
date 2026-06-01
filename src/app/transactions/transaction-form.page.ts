@@ -434,7 +434,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     const now = new Date();
     const recurringPaymentId = crypto.randomUUID();
     const amountValue = Number(this.form.amount ?? 0);
-    const storedAmount = this.form.type === 'expense' ? -Math.abs(amountValue) : Math.abs(amountValue);
+    const storedAmount = Math.abs(amountValue);
 
     const recurringPayment: RecurringPayment = {
       id: recurringPaymentId,
