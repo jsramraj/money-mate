@@ -1,9 +1,18 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-menu-button slot="start"></ion-menu-button>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
     <ion-title>
       Settings
     </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="syncLookupData()" [disabled]="!canSync || syncingSettings" aria-label="Sync lookup data">
+        <ion-spinner *ngIf="syncingSettings" slot="icon-only" name="crescent"></ion-spinner>
+        <ion-icon *ngIf="!syncingSettings" slot="icon-only" name="sync-outline"></ion-icon>
+        <ion-badge *ngIf="hasDirtyLookupData && !syncingSettings" color="warning" slot="end">!</ion-badge>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
