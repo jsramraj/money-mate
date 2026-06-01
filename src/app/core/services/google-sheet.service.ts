@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { GoogleSheetsDbService } from './google-sheets-db.service';
 import { Account, Budget, Category, GUEST_USER_NAME, RecurringPayment, Transaction } from '../database/models';
-import { AccountRepository, BudgetRepository, CategoryRepository, TransactionRepository } from '../database/repositories';
+import { AccountRepository, BudgetRepository, CategoryRepository, RecurringPaymentRepository, TransactionRepository } from '../database/repositories';
 import { DatabaseService, CURRENT_SCHEMA_VERSION } from '../database/database.service';
 
 export interface SpreadsheetSummary {
@@ -18,6 +18,7 @@ export class GoogleSheetService {
     private readonly accountRepository: AccountRepository,
     private readonly budgetRepository: BudgetRepository,
     private readonly categoryRepository: CategoryRepository,
+    private readonly recurringPaymentRepository: RecurringPaymentRepository,
     private readonly transactionRepository: TransactionRepository,
     private readonly db: DatabaseService,
   ) {}
@@ -640,16 +641,8 @@ export class GoogleSheetService {
       );
     }
 
-    // Clear dirty flags
     if (pushedIds.length > 0) {
-      await this.db.transaction('rw', this.db.recurringPayments, async () => {
-        for (const id of pushedIds) {
-          const rp = await this.db.recurringPayments.get(id);
-          if (rp) {
-            await this.db.recurringPayments.update(id, { isDirty: false });
-          }
-        }
-      });
+      await this.recurringPaymentRepository.clearDirtyFlags(pushedIds);
     }
   }
 
