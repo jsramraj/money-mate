@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import Dexie, { Table } from 'dexie';
-import { Account, Budget, Category, GUEST_USER_NAME, Transaction } from './models';
+import { Account, Budget, Category, GUEST_USER_NAME, RecurringPayment, Transaction } from './models';
+
+export const CURRENT_SCHEMA_VERSION = 3;
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +12,7 @@ export class DatabaseService extends Dexie {
   accounts!: Table<Account>;
   categories!: Table<Category>;
   transactions!: Table<Transaction>;
+  recurringPayments!: Table<RecurringPayment>;
   budgets!: Table<Budget>;
   private dirtyTrackingBypassCount = 0;
 
@@ -30,9 +33,18 @@ export class DatabaseService extends Dexie {
       budgets: '++id, name, type, period, startDate, createdAt, isDirty'
     });
 
+    this.version(3).stores({
+      accounts: '++id, name, type, ownerName, createdAt, isDirty',
+      categories: '++id, name, sortOrder, createdAt, isDirty',
+      transactions: '++id, accountId, categoryId, date, type, amount, recurringPaymentId, createdAt, createdBy, isDirty',
+      budgets: '++id, name, type, period, startDate, createdAt, isDirty',
+      recurringPayments: 'id, accountId, categoryId, date, type, amount, frequency, status, createdAt, createdBy, isDirty'
+    });
+
     this.registerAccountHooks();
     this.registerCategoryHooks();
     this.registerTransactionHooks();
+    this.registerRecurringPaymentHooks();
     this.registerBudgetHooks();
 
     // Initialize default categories on first run - using transaction approach like React example
@@ -147,6 +159,36 @@ export class DatabaseService extends Dexie {
     });
   }
 
+  private registerRecurringPaymentHooks(): void {
+    this.recurringPayments.hook('creating', (_primKey, obj: RecurringPayment) => {
+      if (this.dirtyTrackingBypassCount > 0) {
+        return;
+      }
+
+      const now = new Date();
+      const actor = this.getCurrentActorName();
+      obj.createdAt = obj.createdAt ?? now;
+      obj.updatedAt = now;
+      obj.createdBy = obj.createdBy ?? actor;
+      obj.updatedBy = actor;
+      obj.isDirty = true;
+    });
+
+    this.recurringPayments.hook('updating', (mods: Partial<RecurringPayment>) => {
+      if (this.dirtyTrackingBypassCount > 0) {
+        return mods;
+      }
+
+      const actor = this.getCurrentActorName();
+      return {
+        ...mods,
+        updatedAt: new Date(),
+        updatedBy: actor,
+        isDirty: true,
+      };
+    });
+  }
+
   private registerBudgetHooks(): void {
     this.budgets.hook('creating', (_primKey, obj: Budget) => {
       if (this.dirtyTrackingBypassCount > 0) {
@@ -230,10 +272,11 @@ export class DatabaseService extends Dexie {
    * Clear all data (useful for development/testing)
    */
   async clearAllData(): Promise<void> {
-    await this.transaction('rw', this.accounts, this.categories, this.transactions, this.budgets, async () => {
+    await this.transaction('rw', [this.accounts, this.categories, this.transactions, this.recurringPayments, this.budgets], async () => {
       await this.accounts.clear();
       await this.categories.clear(); 
       await this.transactions.clear();
+      await this.recurringPayments.clear();
       await this.budgets.clear();
     });
   }

@@ -96,6 +96,10 @@ export class AppComponent {
       return '/tabs/transactions/form/:id';
     }
 
+    if (pathWithoutQuery.startsWith('/settings/recurring-payments/')) {
+      return '/settings/recurring-payments/:id';
+    }
+
     return pathWithoutQuery;
   }
 
@@ -103,12 +107,15 @@ export class AppComponent {
     const pageTitles: Record<string, string> = {
       '/login': 'Login',
       '/onboarding': 'Google Sheet Onboarding',
+      '/startup/recurring-review': 'Recurring Payments Due',
       '/tabs/dashboard': 'Dashboard',
       '/tabs/transactions': 'Transactions',
       '/tabs/transactions/form': 'New Transaction',
       '/tabs/transactions/form/:id': 'Edit Transaction',
       '/settings': 'Settings',
       '/settings/linked-sheet': 'Linked Spreadsheet',
+      '/settings/recurring-payments': 'Recurring Payments',
+      '/settings/recurring-payments/:id': 'Edit Recurring Payment',
       '/settings/about': 'About',
       '/settings/categories': 'Categories',
       '/settings/accounts': 'Accounts',

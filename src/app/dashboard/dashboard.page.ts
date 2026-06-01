@@ -17,7 +17,7 @@ import { addIcons } from 'ionicons';
 import { appsOutline } from 'ionicons/icons';
 import { DashboardLayoutService } from './dashboard-layout.service';
 import { DashboardDateRangeService, DashboardDateRange } from './services/dashboard-date-range.service';
-import { AnalyticsService } from '../core/services';
+import { AnalyticsService, RecurringStartupService } from '../core/services';
 import {
   DASHBOARD_WIDGET_BY_ID,
   DashboardWidgetDefinition,
@@ -64,6 +64,8 @@ export class DashboardPage implements OnInit, OnDestroy {
   private readonly alertController = inject(AlertController);
   private readonly sessionService = inject(SessionService);
   private readonly toastController = inject(ToastController);
+  private readonly recurringStartupService = inject(RecurringStartupService);
+  private checkingRecurringStartup = false;
 
   constructor() {
     addIcons({ appsOutline });
@@ -88,6 +90,32 @@ export class DashboardPage implements OnInit, OnDestroy {
   async ionViewWillEnter(): Promise<void> {
     this.refreshVisibleWidgets();
     await this.checkOnboardingAccounts();
+    await this.checkRecurringStartupPayments();
+  }
+
+  private async checkRecurringStartupPayments(): Promise<void> {
+    if (this.checkingRecurringStartup) {
+      return;
+    }
+
+    if (this.recurringStartupService.hasUserActionOnDate()) {
+      return;
+    }
+
+    try {
+      this.checkingRecurringStartup = true;
+      const lastActionAt = this.recurringStartupService.getLastUserActionAt();
+      const missingPayments = await this.recurringStartupService.getMissingMonthlyRecurringPayments(new Date(), lastActionAt);
+      if (missingPayments.length === 0) {
+        return;
+      }
+
+      await this.router.navigate(['/startup/recurring-review']);
+    } catch (error) {
+      console.error('Error checking startup recurring payments:', error);
+    } finally {
+      this.checkingRecurringStartup = false;
+    }
   }
 
   private async checkOnboardingAccounts(): Promise<void> {

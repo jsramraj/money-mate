@@ -10,6 +10,8 @@ export interface Transaction extends AuditableEntity {
   notes?: string; // Optional additional details
   tags?: string[]; // Optional tags for flexible filtering
   transferToAccountId?: string; // For transfer transactions
+  recurringPaymentId?: string;
 }
 
 export type TransactionType = Transaction['type'];
+export type RecurrenceSelection = 'never' | 'monthly';

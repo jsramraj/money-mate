@@ -65,6 +65,14 @@ export const routes: Routes = [
     component: LinkedSheetPage,
   },
   {
+    path: 'settings/recurring-payments/:id',
+    loadComponent: () => import('./settings/recurring-payment-detail.page').then((m) => m.RecurringPaymentDetailPage),
+  },
+  {
+    path: 'settings/recurring-payments',
+    loadComponent: () => import('./settings/recurring-payments.page').then((m) => m.RecurringPaymentsPage),
+  },
+  {
     path: 'settings',
     loadComponent: () => import('./settings/settings.page').then((m) => m.SettingsPage),
   },
@@ -79,6 +87,10 @@ export const routes: Routes = [
   {
     path: 'imports/transactions/quick-add',
     loadComponent: () => import('./imports').then((m) => m.TransactionQuickAddPage),
+  },
+  {
+    path: 'startup/recurring-review',
+    loadComponent: () => import('./startup/recurring-startup-review.page').then((m) => m.RecurringStartupReviewPage),
   },
   {
     path: 'dashboard/customize',

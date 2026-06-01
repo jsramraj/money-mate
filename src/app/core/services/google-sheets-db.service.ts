@@ -289,6 +289,43 @@ export class GoogleSheetsDbService {
     }
   }
 
+  /**
+   * Add new sheets to an existing spreadsheet.
+   * @param sheetTitles Array of sheet names to add
+   */
+  async addSheets(sheetTitles: string[]): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    const spreadsheetId = this.getSpreadsheetId();
+    
+    const requests = sheetTitles.map(title => ({
+      addSheet: {
+        properties: {
+          title,
+        },
+      },
+    }));
+
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ requests }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      // If sheet already exists, that's okay - don't throw
+      if (!errorText.includes('already exists')) {
+        throw new Error(`Failed to add sheets (${response.status}): ${errorText}`);
+      }
+    }
+  }
+
   private async ensureValidToken(): Promise<void> {
     const currentSession = this.sessionService.currentSession;
     if (!currentSession?.accessToken) {

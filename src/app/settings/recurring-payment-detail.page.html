@@ -1,0 +1,107 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/settings/recurring-payments"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Recurring Payment</ion-title>
+    <ion-buttons slot="end">
+      <ion-button [disabled]="!canSave" (click)="save()">
+        <ion-icon name="save-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="container" *ngIf="loading">
+    <p>Loading recurring payment...</p>
+  </div>
+
+  <div class="container" *ngIf="!loading && error">
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="container" *ngIf="!loading && !error && recurringPayment">
+    <section class="meta-card">
+      <div class="meta-card__row">
+        <div class="meta-card__item">
+          <span class="meta-card__label">Type</span>
+          <strong>{{ recurringPayment.type | titlecase }}</strong>
+        </div>
+        <div class="meta-card__item">
+          <span class="meta-card__label">Frequency</span>
+          <strong>{{ recurringPayment.frequency | titlecase }}</strong>
+        </div>
+      </div>
+      <div class="meta-card__row">
+        <div class="meta-card__item">
+          <span class="meta-card__label">Account</span>
+          <strong>{{ accountName }}</strong>
+        </div>
+        <div class="meta-card__item">
+          <span class="meta-card__label">Category</span>
+          <strong>{{ categoryName }}</strong>
+        </div>
+      </div>
+      <div class="meta-card__row" *ngIf="recurringPayment.type === 'transfer'">
+        <div class="meta-card__item meta-card__item--full">
+          <span class="meta-card__label">Transfer To</span>
+          <strong>{{ transferToAccountName }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-title">Editable fields</div>
+      <ion-list>
+        <ion-item>
+          <ion-label position="stacked">Description</ion-label>
+          <ion-input
+            [(ngModel)]="descriptionValue"
+            placeholder="Recurring payment description">
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Amount</ion-label>
+          <ion-input
+            type="number"
+            inputmode="decimal"
+            min="0"
+            [(ngModel)]="amountValue"
+            placeholder="0.00">
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Recurring date</ion-label>
+          <ion-datetime-button datetime="recurring-payment-date"></ion-datetime-button>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Status</ion-label>
+          <ion-select [(ngModel)]="statusValue" interface="action-sheet">
+            <ion-select-option value="active">Active</ion-select-option>
+            <ion-select-option value="paused">Paused</ion-select-option>
+            <ion-select-option value="cancelled">Cancelled</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-list>
+    </section>
+
+    <ion-note color="medium" class="helper-text">
+      Account, category, frequency, and transaction type stay fixed for this recurring payment.
+    </ion-note>
+
+    <ion-modal [keepContentsMounted]="true">
+      <ng-template>
+        <ion-datetime
+          id="recurring-payment-date"
+          presentation="date"
+          [value]="dateValue"
+          (ionChange)="onDateChange($event)">
+        </ion-datetime>
+      </ng-template>
+    </ion-modal>
+  </div>
+</ion-content>

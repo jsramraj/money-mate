@@ -1,0 +1,10 @@
+<div class="recurring-summary" [ngClass]="{ 'recurring-summary--single': !isRecurring, 'recurring-summary--paused': isPaused, 'recurring-summary--cancelled': isCancelled }">
+  <ion-icon name="repeat-outline" aria-hidden="true"></ion-icon>
+  <span>{{ summaryText }}</span>
+  <ion-icon
+    [name]="statusIconName"
+    [color]="statusIconColor"
+    [attr.aria-label]="statusIconLabel"
+    [attr.title]="statusTitle"
+  ></ion-icon>
+</div>

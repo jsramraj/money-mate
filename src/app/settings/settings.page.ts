@@ -20,7 +20,7 @@ import {
 import { Subject, takeUntil } from 'rxjs';
 import { ThemeService, Theme, SessionService, AuthMode } from '../core/services';
 import { addIcons } from 'ionicons';
-import { chevronForwardOutline, logOutOutline, personCircleOutline } from 'ionicons/icons';
+import { chevronForwardOutline, logOutOutline, personCircleOutline, repeatOutline } from 'ionicons/icons';
 import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
@@ -72,7 +72,7 @@ export class SettingsPage implements OnInit, OnDestroy {
     private router: Router,
     private http: HttpClient,
   ) {
-    addIcons({ chevronForwardOutline, logOutOutline, personCircleOutline });
+    addIcons({ chevronForwardOutline, logOutOutline, personCircleOutline, repeatOutline });
   }
 
   ngOnInit() {
@@ -137,6 +137,10 @@ export class SettingsPage implements OnInit, OnDestroy {
 
   async openBudgetManagement(): Promise<void> {
     await this.router.navigate(['/settings/budgets']);
+  }
+
+  async openRecurringPaymentsManagement(): Promise<void> {
+    await this.router.navigate(['/settings/recurring-payments']);
   }
 
   async openLinkedSheetSettings(): Promise<void> {

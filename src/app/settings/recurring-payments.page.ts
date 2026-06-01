@@ -1,0 +1,153 @@
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import {
+  IonBackButton,
+  IonBadge,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonSpinner,
+  IonTitle,
+  IonToolbar,
+} from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import {
+  chevronForwardOutline,
+  repeatOutline,
+} from 'ionicons/icons';
+import { RecurringPayment } from '../core/database/models';
+import { DatabaseService } from '../core/database/database.service';
+import { AccountRepository, CategoryRepository } from '../core/database/repositories';
+
+@Component({
+  selector: 'app-recurring-payments',
+  standalone: true,
+  templateUrl: './recurring-payments.page.html',
+  styleUrls: ['./recurring-payments.page.scss'],
+  imports: [
+    CommonModule,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonBackButton,
+    IonContent,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonBadge,
+    IonIcon,
+    IonSpinner,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class RecurringPaymentsPage implements OnInit {
+  private readonly CURRENCY_KEY = 'money-mate-currency';
+  recurringPayments: RecurringPayment[] = [];
+  loading = true;
+  error: string | null = null;
+  selectedCurrency = 'USD';
+  private accountNames = new Map<string, string>();
+  private categoryNames = new Map<string, string>();
+
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly accountRepository: AccountRepository,
+    private readonly categoryRepository: CategoryRepository,
+    private readonly router: Router,
+    private readonly cdr: ChangeDetectorRef,
+  ) {
+    addIcons({
+      repeatOutline,
+      chevronForwardOutline,
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadSelectedCurrency();
+    void this.loadRecurringPayments();
+  }
+
+  ionViewWillEnter(): void {
+    void this.loadRecurringPayments();
+  }
+
+  get visibleRecurringPayments(): RecurringPayment[] {
+    return this.recurringPayments.filter((item) => !item.isDeleted && item.status !== 'cancelled');
+  }
+
+  trackByRecurringPaymentId(_: number, recurringPayment: RecurringPayment): string {
+    return recurringPayment.id;
+  }
+
+  getStatusLabel(status: RecurringPayment['status']): string {
+    return status === 'paused' ? 'Paused' : 'Active';
+  }
+
+  getStatusColor(status: RecurringPayment['status']): 'success' | 'warning' {
+    return status === 'paused' ? 'warning' : 'success';
+  }
+
+  getDisplayAmount(amount: number): number {
+    return Math.abs(amount);
+  }
+
+  getFrequencyLabel(frequency: RecurringPayment['frequency']): string {
+    switch (frequency) {
+      case 'week':
+        return 'week';
+      case 'year':
+        return 'year';
+      default:
+        return 'month';
+    }
+  }
+
+  getCategoryName(recurringPayment: RecurringPayment): string {
+    if (recurringPayment.type === 'transfer') {
+      return 'Transfer';
+    }
+
+    return this.categoryNames.get(recurringPayment.categoryId) ?? 'Uncategorized';
+  }
+
+  getAccountName(accountId: string): string {
+    return this.accountNames.get(accountId) ?? 'Unknown account';
+  }
+
+  async openEditPage(recurringPayment: RecurringPayment): Promise<void> {
+    await this.router.navigate(['/settings/recurring-payments', recurringPayment.id]);
+  }
+
+  private async loadRecurringPayments(): Promise<void> {
+    try {
+      this.loading = true;
+      this.error = null;
+
+      const [recurringPayments, accounts, categories] = await Promise.all([
+        this.db.recurringPayments.orderBy('date').reverse().toArray(),
+        this.accountRepository.getAccountsForSettings(),
+        this.categoryRepository.getCategoriesForSettings(),
+      ]);
+
+      this.accountNames = new Map(accounts.map((account) => [account.id, account.name]));
+      this.categoryNames = new Map(categories.map((category) => [category.id, category.name]));
+      this.recurringPayments = recurringPayments;
+    } catch (error) {
+      console.error('Failed to load recurring payments:', error);
+      this.error = 'Failed to load recurring payments';
+    } finally {
+      this.loading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private loadSelectedCurrency(): void {
+    this.selectedCurrency = localStorage.getItem(this.CURRENCY_KEY) || 'USD';
+  }
+}

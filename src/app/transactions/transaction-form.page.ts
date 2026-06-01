@@ -34,13 +34,15 @@ import {
 import { AlertController, ToastController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { chevronDownOutline, chevronUpOutline, closeCircle, trashOutline, saveOutline } from 'ionicons/icons';
-import { Account, Category, Transaction, TransactionType } from '../core/database/models';
+import { Account, Category, GUEST_USER_NAME, RecurrenceSelection, RecurringPayment, Transaction, TransactionType } from '../core/database/models';
 import { AccountRepository, CategoryRepository, TransactionRepository, CreateTransactionInput, UpdateTransactionInput } from '../core/database/repositories';
 import { AnalyticsService } from '../core/services';
 import { AutoCategorizationService } from '../core/services/auto-categorization.service';
 import { NavController } from '@ionic/angular';
 import { CategoryGridModalComponent } from '../shared/category-grid-selector/category-grid-modal.component';
+import { RecurringPaymentSummaryComponent } from '../shared/recurring-payment-summary/recurring-payment-summary.component';
 import { TagInputComponent } from '../shared/tag-input/tag-input.component';
+import { DatabaseService } from '../core/database/database.service';
 
 @Component({
   selector: 'app-transaction-form',
@@ -72,6 +74,7 @@ import { TagInputComponent } from '../shared/tag-input/tag-input.component';
     IonBackButton,
     IonCheckbox,
     TagInputComponent,
+    RecurringPaymentSummaryComponent,
   ],
   templateUrl: './transaction-form.page.html',
   styleUrls: ['./transaction-form.page.scss']
@@ -92,6 +95,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
   descriptionSuggestions: string[] = [];
   filteredSuggestions: string[] = [];
   tagSuggestions: string[] = [];
+  recurringPaymentDetails: RecurringPayment | null = null;
 
   get isEditMode(): boolean {
     return !!this.transactionToEdit;
@@ -99,6 +103,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
 
   form: {
     type: TransactionType;
+    recurrenceSelection: RecurrenceSelection;
     amount: number | null;
     accountId: string;
     transferToAccountId: string;
@@ -109,6 +114,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     tags: string[];
   } = {
     type: 'expense',
+    recurrenceSelection: 'never',
     amount: null,
     accountId: '',
     transferToAccountId: '',
@@ -131,6 +137,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     private analyticsService: AnalyticsService,
     private toastController: ToastController,
     private modalController: ModalController,
+    private db: DatabaseService,
   ) {
     addIcons({ closeCircle, chevronDownOutline, chevronUpOutline, trashOutline, saveOutline });
   }
@@ -161,7 +168,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
       const tx = await this.transactionRepository.getTransactionById(id);
       if (tx) {
         this.transactionToEdit = tx;
-        this.populateFormFromTransaction(tx);
+        await this.populateFormFromTransaction(tx);
         return;
       }
     } else {
@@ -253,7 +260,16 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     }, 500);
   }
 
-  private populateFormFromTransaction(tx: Transaction): void {
+  private async populateFormFromTransaction(tx: Transaction): Promise<void> {
+    this.recurringPaymentDetails = tx.recurringPaymentId
+      ? await this.db.recurringPayments.get(tx.recurringPaymentId) ?? null
+      : null;
+
+    const recurrenceSelection: RecurrenceSelection =
+      this.recurringPaymentDetails?.frequency === 'month' || tx.recurringPaymentId
+        ? 'monthly'
+        : 'never';
+
     const date = new Date(tx.date);
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -261,6 +277,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
 
     this.form = {
       type: tx.type,
+      recurrenceSelection,
       amount: Math.abs(tx.amount),
       accountId: tx.accountId,
       transferToAccountId: tx.transferToAccountId ?? '',
@@ -271,7 +288,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
       tags: [...(tx.tags ?? [])],
     };
 
-    if (tx.notes || tx.tags?.length) {
+    if (tx.notes || tx.tags?.length || tx.recurringPaymentId) {
       this.showMoreOptions = true;
     }
   }
@@ -324,10 +341,17 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     this.categoryManuallySelected = false;
     try {
       const mode = this.isEditMode ? 'update' : 'create';
+      let recurringPaymentId = this.transactionToEdit?.recurringPaymentId;
+
+      if (!this.isEditMode && this.form.recurrenceSelection !== 'never' && !recurringPaymentId) {
+        recurringPaymentId = await this.createRecurringPayment();
+      }
+
       const baseInput = {
         accountId: this.form.accountId,
         amount: Number(this.form.amount),
         type: this.form.type,
+        recurringPaymentId,
         categoryId: this.form.type === 'transfer' ? '' : (this.form.categoryId || ''),
         description: this.capitalizeDescription(this.form.description.trim()),
         date: new Date(this.form.date),
@@ -360,6 +384,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
         const prevType = this.form.type;
         this.form = {
           type: prevType,
+          recurrenceSelection: prevType === 'transfer' ? 'never' : this.form.recurrenceSelection,
           amount: null,
           accountId: prevAccountId,
           transferToAccountId: '',
@@ -403,6 +428,36 @@ export class TransactionFormPage implements OnInit, OnDestroy {
       .filter((part) => !!part)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
+  }
+
+  private async createRecurringPayment(): Promise<string> {
+    const now = new Date();
+    const recurringPaymentId = crypto.randomUUID();
+    const amountValue = Number(this.form.amount ?? 0);
+    const storedAmount = this.form.type === 'expense' ? -Math.abs(amountValue) : Math.abs(amountValue);
+
+    const recurringPayment: RecurringPayment = {
+      id: recurringPaymentId,
+      accountId: this.form.accountId,
+      amount: storedAmount,
+      type: this.form.type,
+      categoryId: this.form.type === 'transfer' ? '' : (this.form.categoryId || ''),
+      description: this.capitalizeDescription(this.form.description.trim()),
+      date: new Date(this.form.date),
+      notes: this.form.notes.trim() || undefined,
+      tags: this.form.tags.length > 0 ? this.form.tags : undefined,
+      transferToAccountId: this.form.type === 'transfer' ? this.form.transferToAccountId : undefined,
+      frequency: 'month',
+      status: 'active',
+      isDeleted: false,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: GUEST_USER_NAME,
+      updatedBy: GUEST_USER_NAME,
+    };
+
+    await this.db.recurringPayments.add(recurringPayment);
+    return recurringPaymentId;
   }
 
   onDescriptionBlur(event: any) {

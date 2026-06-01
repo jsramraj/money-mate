@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { GoogleSheetsDbService } from './google-sheets-db.service';
-import { Account, Budget, Category, GUEST_USER_NAME, Transaction } from '../database/models';
+import { Account, Budget, Category, GUEST_USER_NAME, RecurringPayment, Transaction } from '../database/models';
 import { AccountRepository, BudgetRepository, CategoryRepository, TransactionRepository } from '../database/repositories';
-import { DatabaseService } from '../database/database.service';
+import { DatabaseService, CURRENT_SCHEMA_VERSION } from '../database/database.service';
 
 export interface SpreadsheetSummary {
   id: string;
@@ -23,11 +23,12 @@ export class GoogleSheetService {
   ) {}
 
   async importAllFromSheetToLocal(): Promise<void> {
-    const [accountsRows, categoriesRows, transactionsRows, budgetsRows] = await Promise.all([
+    const [accountsRows, categoriesRows, transactionsRows, budgetsRows, recurringPaymentsRows] = await Promise.all([
       this.getValuesOrEmpty('accounts!A:M'),
       this.getValuesOrEmpty('categories!A:K'),
-      this.getValuesOrEmpty('transactions!A:O'),
+      this.getValuesOrEmpty('transactions!A:P'),
       this.getValuesOrEmpty('budgets!A:P'),
+      this.getValuesOrEmpty('recurringPayments!A:Q'),
     ]);
 
     const accounts = accountsRows
@@ -54,12 +55,19 @@ export class GoogleSheetService {
       .filter((budget): budget is Budget => !!budget)
       .map((budget) => ({ ...budget, isDirty: false }));
 
-    await this.db.transaction('rw', this.db.accounts, this.db.categories, this.db.transactions, this.db.budgets, async () => {
+    const recurringPayments = recurringPaymentsRows
+      .slice(1)
+      .map((row) => this.parseSheetRecurringPayment(row))
+      .filter((rp): rp is RecurringPayment => !!rp)
+      .map((rp) => ({ ...rp, isDirty: false }));
+
+    await this.db.transaction('rw', [this.db.accounts, this.db.categories, this.db.transactions, this.db.budgets, this.db.recurringPayments], async () => {
       await this.db.runWithoutDirtyTracking(async () => {
         await this.db.transactions.clear();
         await this.db.accounts.clear();
         await this.db.categories.clear();
         await this.db.budgets.clear();
+        await this.db.recurringPayments.clear();
 
         if (accounts.length > 0) {
           await this.db.accounts.bulkPut(accounts);
@@ -75,6 +83,10 @@ export class GoogleSheetService {
 
         if (budgets.length > 0) {
           await this.db.budgets.bulkPut(budgets);
+        }
+
+        if (recurringPayments.length > 0) {
+          await this.db.recurringPayments.bulkPut(recurringPayments);
         }
       });
     });
@@ -98,6 +110,8 @@ export class GoogleSheetService {
       'budgets',
       'categories',
       'transactions',
+      '_meta',
+      'recurringPayments',
     ]);
 
     return {
@@ -181,6 +195,7 @@ export class GoogleSheetService {
           'updatedAt',
           'createdBy',
           'updatedBy',
+          'recurringPaymentId',
         ]],
       },
       {
@@ -192,6 +207,42 @@ export class GoogleSheetService {
           'From Account',
           'To Account',
           'Category',
+        ]],
+      },
+      {
+        range: '_meta!A1',
+        values: [[
+          'key',
+          'value',
+        ]],
+      },
+      {
+        range: '_meta!A2',
+        values: [[
+          'schemaVersion',
+          '3',
+        ]],
+      },
+      {
+        range: 'recurringPayments!A1',
+        values: [[
+          'id',
+          'accountId',
+          'amount',
+          'type',
+          'categoryId',
+          'description',
+          'date',
+          'notes',
+          'tags',
+          'transferToAccountId',
+          'frequency',
+          'status',
+          'isDeleted',
+          'createdAt',
+          'updatedAt',
+          'createdBy',
+          'updatedBy',
         ]],
       },
     
@@ -455,7 +506,7 @@ export class GoogleSheetService {
   }
 
   async syncTransactions(): Promise<void> {
-    const sheetRows = await this.googleSheetsDbService.getValues('transactions!A:O');
+    const sheetRows = await this.googleSheetsDbService.getValues('transactions!A:P');
     const rowsWithoutHeader = sheetRows.slice(1);
     const localTransactions = await this.transactionRepository.getAllTransactions();
 
@@ -499,7 +550,7 @@ export class GoogleSheetService {
 
       if (existing) {
         updateRequests.push({
-          range: `transactions!A${existing.rowNumber}:O${existing.rowNumber}`,
+          range: `transactions!A${existing.rowNumber}:P${existing.rowNumber}`,
           values: [rowValues],
         });
       } else {
@@ -515,12 +566,91 @@ export class GoogleSheetService {
 
     if (rowsToAppend.length > 0) {
       await this.googleSheetsDbService.appendValues(
-        'transactions!A:O',
+        'transactions!A:P',
         rowsToAppend,
       );
     }
 
     await this.transactionRepository.clearDirtyFlags(pushedIds);
+  }
+
+  async syncRecurringPayments(): Promise<void> {
+    const sheetRows = await this.googleSheetsDbService.getValues('recurringPayments!A:Q');
+    const rowsWithoutHeader = sheetRows.slice(1);
+    const localRecurringPayments = await this.db.recurringPayments.toArray();
+
+    const sheetById = new Map<string, { recurringPayment: RecurringPayment; rowNumber: number }>();
+    rowsWithoutHeader.forEach((row, index) => {
+      const parsed = this.parseSheetRecurringPayment(row);
+      if (!parsed) {
+        return;
+      }
+
+      sheetById.set(parsed.id, {
+        recurringPayment: parsed,
+        rowNumber: index + 2,
+      });
+    });
+
+    const localById = new Map(localRecurringPayments.map((rp) => [rp.id, rp]));
+
+    for (const [id, sheetRecord] of sheetById.entries()) {
+      const localRecord = localById.get(id);
+      if (!localRecord) {
+        await this.db.recurringPayments.put({ ...sheetRecord.recurringPayment, isDirty: false });
+        continue;
+      }
+
+      const localUpdatedAt = new Date(localRecord.updatedAt).getTime();
+      const sheetUpdatedAt = new Date(sheetRecord.recurringPayment.updatedAt).getTime();
+      if (sheetUpdatedAt > localUpdatedAt && !localRecord.isDirty) {
+        await this.db.recurringPayments.put({ ...sheetRecord.recurringPayment, isDirty: false });
+      }
+    }
+
+    const dirtyRecurringPayments = await this.db.recurringPayments.filter((rp) => !!rp.isDirty).toArray();
+    const pushedIds: string[] = [];
+    const updateRequests: Array<{ range: string; values: string[][] }> = [];
+    const rowsToAppend: string[][] = [];
+
+    for (const recurringPayment of dirtyRecurringPayments) {
+      const rowValues = this.toSheetRecurringPaymentRow(recurringPayment);
+      const existing = sheetById.get(recurringPayment.id);
+
+      if (existing) {
+        updateRequests.push({
+          range: `recurringPayments!A${existing.rowNumber}:Q${existing.rowNumber}`,
+          values: [rowValues],
+        });
+      } else {
+        rowsToAppend.push(rowValues);
+      }
+
+      pushedIds.push(recurringPayment.id);
+    }
+
+    if (updateRequests.length > 0) {
+      await this.googleSheetsDbService.batchUpdateValues(updateRequests);
+    }
+
+    if (rowsToAppend.length > 0) {
+      await this.googleSheetsDbService.appendValues(
+        'recurringPayments!A:Q',
+        rowsToAppend,
+      );
+    }
+
+    // Clear dirty flags
+    if (pushedIds.length > 0) {
+      await this.db.transaction('rw', this.db.recurringPayments, async () => {
+        for (const id of pushedIds) {
+          const rp = await this.db.recurringPayments.get(id);
+          if (rp) {
+            await this.db.recurringPayments.update(id, { isDirty: false });
+          }
+        }
+      });
+    }
   }
 
   private parseSheetCategory(row: string[]): Category | null {
@@ -571,6 +701,39 @@ export class GoogleSheetService {
       updatedAt: this.parseDate(row[12]),
       createdBy: row[13] || GUEST_USER_NAME,
       updatedBy: row[14] || row[13] || GUEST_USER_NAME,
+      recurringPaymentId: row[15] || undefined,
+      isDirty: false,
+    };
+  }
+
+  private parseSheetRecurringPayment(row: string[]): RecurringPayment | null {
+    if (!row[0]) {
+      return null;
+    }
+
+    const amount = Number(row[2] || 0);
+    const type = this.parseTransactionType(row[3], amount);
+    const frequency = this.parseRecurringPaymentFrequency(row[10]);
+    const status = this.parseRecurringPaymentStatus(row[11]);
+
+    return {
+      id: row[0],
+      accountId: row[1] || '',
+      amount,
+      type,
+      categoryId: row[4] || '',
+      description: row[5] || '',
+      date: this.parseDate(row[6]),
+      notes: row[7] || '',
+      tags: this.parseTags(row[8]),
+      transferToAccountId: row[9] || undefined,
+      frequency,
+      status,
+      isDeleted: row[12] === 'true',
+      createdAt: this.parseDate(row[13]),
+      updatedAt: this.parseDate(row[14]),
+      createdBy: row[15] || GUEST_USER_NAME,
+      updatedBy: row[16] || row[15] || GUEST_USER_NAME,
       isDirty: false,
     };
   }
@@ -683,6 +846,29 @@ export class GoogleSheetService {
       this.toIso(transaction.updatedAt),
       transaction.createdBy || GUEST_USER_NAME,
       transaction.updatedBy || transaction.createdBy || GUEST_USER_NAME,
+      transaction.recurringPaymentId || '',
+    ];
+  }
+
+  private toSheetRecurringPaymentRow(recurringPayment: RecurringPayment): string[] {
+    return [
+      recurringPayment.id,
+      recurringPayment.accountId,
+      String(recurringPayment.amount),
+      recurringPayment.type,
+      recurringPayment.categoryId,
+      recurringPayment.description,
+      this.toIso(recurringPayment.date),
+      recurringPayment.notes || '',
+      JSON.stringify(recurringPayment.tags || []),
+      recurringPayment.transferToAccountId || '',
+      recurringPayment.frequency,
+      recurringPayment.status,
+      String(!!recurringPayment.isDeleted),
+      this.toIso(recurringPayment.createdAt),
+      this.toIso(recurringPayment.updatedAt),
+      recurringPayment.createdBy || GUEST_USER_NAME,
+      recurringPayment.updatedBy || recurringPayment.createdBy || GUEST_USER_NAME,
     ];
   }
 
@@ -751,6 +937,28 @@ export class GoogleSheetService {
         return value;
       default:
         return 'monthly';
+    }
+  }
+
+  private parseRecurringPaymentFrequency(value: string | undefined): RecurringPayment['frequency'] {
+    switch (value) {
+      case 'week':
+      case 'month':
+      case 'year':
+        return value;
+      default:
+        return 'month';
+    }
+  }
+
+  private parseRecurringPaymentStatus(value: string | undefined): RecurringPayment['status'] {
+    switch (value) {
+      case 'active':
+      case 'paused':
+      case 'cancelled':
+        return value;
+      default:
+        return 'active';
     }
   }
 
@@ -846,5 +1054,163 @@ export class GoogleSheetService {
 
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+
+  /**
+   * Get the schema version from the _meta sheet.
+   * Returns 0 if the _meta sheet doesn't exist (legacy spreadsheets).
+   */
+  async getSheetSchemaVersion(): Promise<number> {
+    try {
+      const metaRows = await this.googleSheetsDbService.getValues('_meta!A:B');
+      
+      // Find the row where column A = 'schemaVersion'
+      const versionRow = metaRows.find(row => row[0] === 'schemaVersion');
+      
+      if (versionRow && versionRow[1]) {
+        const version = Number(versionRow[1]);
+        return Number.isFinite(version) ? version : 0;
+      }
+      
+      return 0;
+    } catch (error) {
+      // _meta sheet doesn't exist (legacy spreadsheet)
+      return 0;
+    }
+  }
+
+  /**
+   * Check if the sheet schema version is compatible with the local database version.
+   * Returns compatibility info including whether migration is needed.
+   */
+  async checkSchemaCompatibility(): Promise<{
+    compatible: boolean;
+    sheetVersion: number;
+    localVersion: number;
+    needsMigration: boolean;
+  }> {
+    const sheetVersion = await this.getSheetSchemaVersion();
+    const localVersion = this.db.verno;
+    
+    return {
+      compatible: sheetVersion === localVersion,
+      sheetVersion,
+      localVersion,
+      needsMigration: sheetVersion < localVersion && sheetVersion > 0,
+    };
+  }
+
+  /**
+   * Migrates the spreadsheet schema if needed during sync operations.
+   * Runs automatically before sync to ensure sheet structure matches app version.
+   */
+  async migrateSheetSchemaIfNeeded(): Promise<void> {
+    const compatibility = await this.checkSchemaCompatibility();
+    
+    // Already at current version
+    if (compatibility.compatible) {
+      return;
+    }
+    
+    // Legacy spreadsheet (no _meta sheet) - migrate from v0 to v3
+    if (compatibility.sheetVersion === 0) {
+      console.log('Migrating legacy spreadsheet to schema v3...');
+      await this.migrateFromV0ToV3();
+      return;
+    }
+    
+    // Future: Handle incremental migrations (v1->v2, v2->v3, etc.)
+    if (compatibility.needsMigration) {
+      console.log(`Migrating sheet from v${compatibility.sheetVersion} to v${compatibility.localVersion}...`);
+      
+      // For now, only v0->v3 is implemented
+      // Add more migration paths here as needed
+      if (compatibility.sheetVersion < 3 && compatibility.localVersion >= 3) {
+        await this.migrateToV3(compatibility.sheetVersion);
+      }
+    }
+  }
+
+  /**
+   * Migrate legacy spreadsheet (no _meta) from v0 to v3.
+   * Adds _meta sheet, recurringPayments sheet, and recurringPaymentId column to transactions.
+   */
+  private async migrateFromV0ToV3(): Promise<void> {
+    const updates: Array<{ range: string; values: string[][] }> = [];
+    
+    // Step 1: Add _meta and recurringPayments sheets
+    try {
+      await this.googleSheetsDbService.addSheets(['_meta', 'recurringPayments']);
+    } catch (error) {
+      console.warn('Failed to add sheets (may already exist):', error);
+      // Continue with migration even if sheets exist
+    }
+    
+    // Step 2: Initialize _meta sheet with schema version
+    updates.push(
+      {
+        range: '_meta!A1',
+        values: [['key', 'value']],
+      },
+      {
+        range: '_meta!A2',
+        values: [['schemaVersion', '3']],
+      }
+    );
+    
+    // Step 3: Initialize recurringPayments sheet with headers
+    updates.push({
+      range: 'recurringPayments!A1',
+      values: [[
+        'id',
+        'accountId',
+        'amount',
+        'type',
+        'categoryId',
+        'description',
+        'date',
+        'notes',
+        'tags',
+        'transferToAccountId',
+        'frequency',
+        'status',
+        'isDeleted',
+        'createdAt',
+        'updatedAt',
+        'createdBy',
+        'updatedBy',
+      ]],
+    });
+    
+    // Step 4: Update transactions header to add recurringPaymentId column
+    const existingTransactionsHeader = await this.googleSheetsDbService.getValues('transactions!A1:O1');
+    if (existingTransactionsHeader.length > 0) {
+      const updatedHeader = [...existingTransactionsHeader[0], 'recurringPaymentId'];
+      updates.push({
+        range: 'transactions!A1',
+        values: [updatedHeader],
+      });
+    }
+    
+    // Apply all updates
+    await this.googleSheetsDbService.batchUpdateValues(updates);
+    
+    console.log('Successfully migrated spreadsheet to schema v3');
+  }
+
+  /**
+   * Migrate from any version < 3 to v3.
+   * For incremental migrations: v1->v2->v3.
+   */
+  private async migrateToV3(fromVersion: number): Promise<void> {
+    // For now, treat any version < 3 the same as v0
+    // In the future, add specific migration paths per version
+    await this.migrateFromV0ToV3();
+    
+    // Update version in _meta
+    await this.googleSheetsDbService.batchUpdateValues([{
+      range: '_meta!A2',
+      values: [['schemaVersion', '3']],
+    }]);
   }
 }

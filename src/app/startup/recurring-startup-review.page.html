@@ -1,0 +1,65 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Recurring Payments Due</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="container">
+    <div class="loading-state" *ngIf="loading">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Checking recurring payments...</p>
+    </div>
+
+    <div class="error-state" *ngIf="!loading && error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && !error && items.length === 0">
+      <h2>All caught up</h2>
+      <p>No recurring payments are pending for this month.</p>
+      <ion-button (click)="skipForMonth()">Back to Dashboard</ion-button>
+    </div>
+
+    <div *ngIf="!loading && !error && items.length > 0">
+      <p class="intro-text">Select the recurring payments to record now.</p>
+
+      <div class="actions-row">
+        <ion-button fill="outline" size="small" (click)="selectAll()">Select all</ion-button>
+        <ion-button fill="outline" size="small" color="medium" (click)="clearSelection()">Clear</ion-button>
+      </div>
+
+      <ion-list>
+        <ion-item *ngFor="let item of items; trackBy: trackByRecurringId">
+          <ion-checkbox
+            slot="start"
+            [checked]="item.selected"
+            (ionChange)="onSelectionChange(item, $event.detail.checked)">
+          </ion-checkbox>
+
+          <ion-label>
+            <h2>{{ item.description }}</h2>
+            <p>{{ item.amount | currency:selectedCurrency:'symbol':'1.0-2' }} / Month</p>
+            <p>Due: {{ item.scheduledDate | date:'MMM d' }} • {{ item.accountName }} • {{ item.categoryName }}</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
+      <ion-note color="medium" class="helper-text">
+        You won’t be asked again for this month after this screen.
+      </ion-note>
+
+      <div class="footer-actions">
+        <ion-button fill="outline" color="medium" (click)="skipForMonth()" [disabled]="saving">
+          Skip for this month
+        </ion-button>
+        <ion-button (click)="confirmSelected()" [disabled]="!hasSelection || saving">
+          Confirm & Create
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</ion-content>
