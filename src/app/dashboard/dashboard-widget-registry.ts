@@ -5,6 +5,7 @@ import { DailyExpensesWidgetComponent } from './widgets/daily-expenses/daily-exp
 import { ExpenseBreakdownWidgetComponent } from './widgets/expense-breakdown/expense-breakdown-widget.component';
 import { ExpenseComparisonWidgetComponent } from './widgets/expense-comparison/expense-comparison-widget.component';
 import { RecentTransactionsWidgetComponent } from './widgets/recent-transactions/recent-transactions-widget.component';
+import { UpcomingPaymentsWidgetComponent } from './widgets/upcoming-payments/upcoming-payments-widget.component';
 
 export type DashboardWidgetId =
   | 'top-summary'
@@ -12,7 +13,8 @@ export type DashboardWidgetId =
   | 'daily-expenses'
   | 'expense-breakdown'
   | 'expense-comparison'
-  | 'recent-transactions';
+  | 'recent-transactions'
+  | 'upcoming-payments';
 
 export interface DashboardWidgetDefinition {
   id: DashboardWidgetId;
@@ -63,6 +65,14 @@ export const DASHBOARD_WIDGET_DEFINITIONS: DashboardWidgetDefinition[] = [
     title: 'Recent Transactions',
     subtitle: 'Latest 5 to 10 transactions',
     component: RecentTransactionsWidgetComponent
+  }
+  ,
+  {
+    id: 'upcoming-payments',
+    title: 'Upcoming Payments',
+    subtitle: 'Next scheduled recurring payments',
+    component: UpcomingPaymentsWidgetComponent,
+    defaultVisible: false,
   }
 ];
 

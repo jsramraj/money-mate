@@ -1,0 +1,41 @@
+<ion-card>
+  <ion-card-header>
+    <ion-card-title>Upcoming Payments</ion-card-title>
+  </ion-card-header>
+  <div style="padding:0 16px 8px; display:flex; justify-content:space-between; align-items:center;">
+    <div style="font-size:0.9rem; color:var(--ion-color-medium);">
+      Showing {{ items.length }} / {{ totalCount || 0 }}
+    </div>
+    <div style="font-weight:600">Total: {{ totalAmount | currency }}</div>
+  </div>
+
+  <ion-card-content>
+    <div *ngIf="loading" class="widget-loading">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <ion-list *ngIf="!loading && items.length > 0">
+      <ion-item *ngFor="let item of items">
+        <div slot="start" style="min-width:80px; text-align:left; color:var(--ion-color-medium); font-size:0.9rem;">
+          {{ item.scheduledDate | date:'MMM d' }}
+        </div>
+
+        <ion-label class="ion-text-wrap">
+          <h3 style="margin:0">{{ item.description }}</h3>
+        </ion-label>
+
+        <div slot="end" style="min-width:110px; text-align:right;">
+          <div style="font-weight:600">{{ item.amount | currency }}</div>
+        </div>
+      </ion-item>
+    </ion-list>
+
+    <div *ngIf="!loading && items.length === 0">
+      <ion-text color="medium">No upcoming payments for selected range.</ion-text>
+    </div>
+
+    <div class="widget-footer" style="margin-top:12px; text-align:right;">
+      <ion-button fill="clear" size="small" (click)="viewAll()">View all</ion-button>
+    </div>
+  </ion-card-content>
+</ion-card>
