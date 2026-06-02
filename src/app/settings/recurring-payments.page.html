@@ -36,7 +36,7 @@
           <p class="amount-line">
             {{ getDisplayAmount(recurringPayment.amount) | currency:selectedCurrency:'symbol':'1.0-2' }} / {{ getFrequencyLabel(recurringPayment.frequency) }}
           </p>
-          <p class="next-line">Next: {{ recurringPayment.date | date:'MMM d' }}</p>
+          <p class="next-line">Next: {{ getNextPaymentDate(recurringPayment) | date:'MMM d' }}</p>
           <p class="meta-line">{{ getAccountName(recurringPayment.accountId) }} • {{ getCategoryName(recurringPayment) }}</p>
         </ion-label>
 

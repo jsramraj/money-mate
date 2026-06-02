@@ -108,6 +108,82 @@ export class RecurringPaymentsPage implements OnInit {
     }
   }
 
+  getNextPaymentDate(recurringPayment: RecurringPayment): Date {
+    const referenceDate = new Date();
+    const anchorDate = new Date(recurringPayment.date);
+
+    switch (recurringPayment.frequency) {
+      case 'week':
+        return this.getNextWeeklyDate(anchorDate, referenceDate);
+      case 'year':
+        return this.getNextYearlyDate(anchorDate, referenceDate);
+      default:
+        return this.getNextMonthlyDate(anchorDate, referenceDate);
+    }
+  }
+
+  private getNextMonthlyDate(anchorDate: Date, referenceDate: Date): Date {
+    const thisMonthScheduled = this.getMonthlyScheduledDate(anchorDate, referenceDate);
+    return thisMonthScheduled.getTime() >= referenceDate.getTime()
+      ? thisMonthScheduled
+      : this.getMonthlyScheduledDate(anchorDate, new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 1));
+  }
+
+  private getNextWeeklyDate(anchorDate: Date, referenceDate: Date): Date {
+    const currentDay = referenceDate.getDay();
+    const targetDay = anchorDate.getDay();
+    const dayDifference = targetDay - currentDay;
+    const scheduled = new Date(referenceDate);
+    scheduled.setDate(referenceDate.getDate() + dayDifference);
+    scheduled.setHours(anchorDate.getHours(), anchorDate.getMinutes(), anchorDate.getSeconds(), anchorDate.getMilliseconds());
+
+    if (scheduled.getTime() < referenceDate.getTime()) {
+      scheduled.setDate(scheduled.getDate() + 7);
+    }
+
+    return scheduled;
+  }
+
+  private getNextYearlyDate(anchorDate: Date, referenceDate: Date): Date {
+    const scheduled = this.getYearlyScheduledDate(anchorDate, referenceDate.getFullYear());
+    if (scheduled.getTime() >= referenceDate.getTime()) {
+      return scheduled;
+    }
+
+    return this.getYearlyScheduledDate(anchorDate, referenceDate.getFullYear() + 1);
+  }
+
+  private getMonthlyScheduledDate(anchorDate: Date, referenceDate: Date): Date {
+    const maxDayInMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0).getDate();
+    const day = Math.min(anchorDate.getDate(), maxDayInMonth);
+
+    return new Date(
+      referenceDate.getFullYear(),
+      referenceDate.getMonth(),
+      day,
+      anchorDate.getHours(),
+      anchorDate.getMinutes(),
+      anchorDate.getSeconds(),
+      anchorDate.getMilliseconds(),
+    );
+  }
+
+  private getYearlyScheduledDate(anchorDate: Date, year: number): Date {
+    const month = anchorDate.getMonth();
+    const maxDayInMonth = new Date(year, month + 1, 0).getDate();
+    const day = Math.min(anchorDate.getDate(), maxDayInMonth);
+
+    return new Date(
+      year,
+      month,
+      day,
+      anchorDate.getHours(),
+      anchorDate.getMinutes(),
+      anchorDate.getSeconds(),
+      anchorDate.getMilliseconds(),
+    );
+  }
+
   getCategoryName(recurringPayment: RecurringPayment): string {
     if (recurringPayment.type === 'transfer') {
       return 'Transfer';
