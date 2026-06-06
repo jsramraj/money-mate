@@ -36,3 +36,12 @@ ion-item {
   flex-direction: column;
   gap: 10px;
 }
+
+.widget-icon-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  margin-top: 8px;
+  border-radius: 6px;
+}

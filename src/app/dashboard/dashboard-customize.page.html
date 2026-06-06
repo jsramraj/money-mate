@@ -26,6 +26,7 @@
             <img
               class="widget-icon-preview"
               [src]="getWidgetIconPath(widget.id)"
+              (error)="onImageError($event)"
               [alt]="widget.title + ' preview'"
               loading="lazy"
               aria-hidden="true"

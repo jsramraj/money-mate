@@ -97,6 +97,13 @@ export class DashboardCustomizePage {
     return `assets/widget-icons/${themeFolder}/${resolvedWidgetId}.png`;
   }
 
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (!img) return;
+    img.onerror = null;
+    img.src = 'assets/widget-icons/placeholder-widget.jpg';
+  }
+
   ionViewWillEnter(): void {
     this.loadDraft();
   }

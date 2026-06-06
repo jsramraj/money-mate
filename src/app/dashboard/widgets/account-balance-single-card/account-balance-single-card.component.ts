@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonButton, IonIcon, IonList, IonItem, IonLabel
 import { addIcons } from 'ionicons';
 import { chevronForward } from 'ionicons/icons';
 import { AccountRepository } from '../../../core/database/repositories';
-import { Account } from '../../../core/database/models';
+import { Account, AccountType } from '../../../core/database/models';
 import { Observable, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -23,7 +23,6 @@ export class AccountBalanceSingleCardComponent implements OnInit {
   totalBalance$: Observable<number>;
   totalNonCredit$: Observable<number>;
   totalCredit$: Observable<number>;
-  totalSavings$: Observable<number>;
   effective$: Observable<number>;
 
   expanded = false;
@@ -39,13 +38,6 @@ export class AccountBalanceSingleCardComponent implements OnInit {
     this.totalNonCredit$ = this.accounts$.pipe(
       map((accounts) => accounts
         .filter((a) => a.type !== 'credit')
-        .reduce((sum, a) => sum + (a.balance || 0), 0)
-      )
-    );
-
-    this.totalSavings$ = this.accounts$.pipe(
-      map((accounts) => accounts
-        .filter((a) => a.type === 'savings')
         .reduce((sum, a) => sum + (a.balance || 0), 0)
       )
     );
@@ -74,7 +66,8 @@ export class AccountBalanceSingleCardComponent implements OnInit {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currencyCode,
-      minimumFractionDigits: 2
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(balance);
   }
 
