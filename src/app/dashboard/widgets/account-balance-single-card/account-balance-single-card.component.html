@@ -1,0 +1,60 @@
+<ion-card class="balance-card total-card account-single-card">
+  <ion-card-content class="card-content">
+    <div class="card-top">
+      <span class="current-label">Current balance</span>
+    </div>
+    <div class="card-middle">
+      <ng-container *ngIf="!expanded">
+        <div class="balance">
+          <ng-container *ngIf="totalBalance$ | async as total">
+            {{ formatBalance(total) }}
+          </ng-container>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="expanded">
+        <div class="meta-row">
+          <div class="meta-item">
+            <div class="meta-label">Savings</div>
+            <div class="meta-value">
+              <ng-container *ngIf="totalSavings$ | async as savings">
+                {{ formatBalance(savings) }}
+              </ng-container>
+            </div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-label">Credit</div>
+            <div class="meta-value">
+              <ng-container *ngIf="totalCredit$ | async as credit">
+                {{ formatBalance(credit) }}
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <div class="balance">
+          <ng-container *ngIf="effective$ | async as eff">
+            {{ formatBalance(eff) }}
+          </ng-container>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="card-bottom card-physical">
+      <ion-button fill="clear" size="small" class="toggle-button" (click)="toggleExpanded()" aria-label="Toggle account details">
+        <ion-icon name="chevron-forward" class="toggle-icon" [class.expanded]="expanded"></ion-icon>
+      </ion-button>
+    </div>
+
+    <ion-list *ngIf="expanded" lines="none" class="accounts-list">
+      <ion-item *ngFor="let acc of accounts$ | async">
+        <ion-label>
+          <h3>{{ acc.name }}</h3>
+          <p>{{ capitalizeType(acc.type) }}</p>
+        </ion-label>
+        <div class="account-balance">{{ formatBalance(acc.balance) }}</div>
+      </ion-item>
+    </ion-list>
+  </ion-card-content>
+</ion-card>

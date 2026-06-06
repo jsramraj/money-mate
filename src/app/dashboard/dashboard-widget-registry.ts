@@ -1,5 +1,6 @@
 import { Type } from '@angular/core';
 import { AccountBalanceCarouselComponent } from './widgets/account-balance-carousel/account-balance-carousel.component';
+import { AccountBalanceSingleCardComponent } from './widgets/account-balance-single-card/account-balance-single-card.component';
 import { BudgetVsActualWidgetComponent } from './widgets/budget-vs-actual/budget-vs-actual-widget.component';
 import { DailyExpensesWidgetComponent } from './widgets/daily-expenses/daily-expenses-widget.component';
 import { ExpenseBreakdownWidgetComponent } from './widgets/expense-breakdown/expense-breakdown-widget.component';
@@ -9,6 +10,7 @@ import { UpcomingPaymentsWidgetComponent } from './widgets/upcoming-payments/upc
 
 export type DashboardWidgetId =
   | 'top-summary'
+  | 'account-balance-single'
   | 'budget-vs-actual'
   | 'daily-expenses'
   | 'expense-breakdown'
@@ -31,6 +33,13 @@ export const DASHBOARD_WIDGET_DEFINITIONS: DashboardWidgetDefinition[] = [
     title: 'Account Balance',
     subtitle: 'All your account balances',
     component: AccountBalanceCarouselComponent
+  },
+  {
+    id: 'account-balance-single',
+    title: 'Account Summary',
+    subtitle: 'Combined assets, credit and effective balance',
+    component: AccountBalanceSingleCardComponent,
+    defaultVisible: false
   },
   {
     id: 'budget-vs-actual',

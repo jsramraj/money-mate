@@ -1,0 +1,96 @@
+.account-single-card {
+  /* Match carousel total-card gradient and shadow */
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    var(--ion-color-primary) 0%,
+    var(--ion-color-secondary) 100%
+  );
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  margin: 16px;
+  width: auto;
+}
+
+.card-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .meta-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .meta-item {
+    text-align: center;
+
+    .meta-label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .meta-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.95);
+    }
+  }
+
+  .balance {
+    margin: 0;
+    font-size: 42px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.card-bottom.card-physical {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 12px 0 0 0;
+}
+
+.toggle-button {
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --min-width: 40px;
+  --border-radius: 999px;
+  --background: rgba(255, 255, 255, 0.16);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-icon {
+  font-size: 22px;
+  transition: transform 0.2s ease;
+  color: white;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.accounts-list {
+  margin-top: 8px;
+  background: transparent;
+  --background: transparent;
+  padding: 0;
+
+  ion-item {
+    --ion-item-background: transparent;
+    background: transparent;
+    color: white;
+
+    .account-balance {
+      font-weight: 600;
+    }
+  }
+}
