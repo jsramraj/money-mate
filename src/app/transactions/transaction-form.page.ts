@@ -384,7 +384,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
         const prevType = this.form.type;
         this.form = {
           type: prevType,
-          recurrenceSelection: prevType === 'transfer' ? 'never' : this.form.recurrenceSelection,
+          recurrenceSelection: 'never',
           amount: null,
           accountId: prevAccountId,
           transferToAccountId: '',
@@ -394,6 +394,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
           notes: '',
           tags: []
         };
+        this.recurringPaymentDetails = null;
         this.showMoreOptions = false;
         // Show a toast to confirm
         await this.presentToast('Saved!');

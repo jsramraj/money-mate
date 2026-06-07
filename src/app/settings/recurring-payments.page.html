@@ -31,16 +31,28 @@
         class="recurring-list-item"
         *ngFor="let recurringPayment of visibleRecurringPayments; trackBy: trackByRecurringPaymentId"
         (click)="openEditPage(recurringPayment)">
-        <ion-label>
+        <div class="recurring-date-block">
+          <span class="recurring-date-month">{{ getNextPaymentDate(recurringPayment) | date:'MMM' }}</span>
+          <span class="recurring-date-day">{{ getNextPaymentDate(recurringPayment) | date:'d' }}</span>
+        </div>
+
+        <div class="recurring-details">
           <h2>{{ recurringPayment.description || 'Untitled recurring payment' }}</h2>
-          <p class="amount-line">
-            {{ getDisplayAmount(recurringPayment.amount) | currency:selectedCurrency:'symbol':'1.0-2' }} / {{ getFrequencyLabel(recurringPayment.frequency) }}
-          </p>
           <p class="next-line">Next: {{ getNextPaymentDate(recurringPayment) | date:'MMM d' }}</p>
           <p class="meta-line">{{ getAccountName(recurringPayment.accountId) }} • {{ getCategoryName(recurringPayment) }}</p>
-        </ion-label>
+        </div>
 
-        <ion-badge [color]="getStatusColor(recurringPayment.status)">{{ getStatusLabel(recurringPayment.status) }}</ion-badge>
+        <div class="recurring-amount-block">
+          <div class="recurring-status-row">
+            <ion-badge [color]="getStatusColor(recurringPayment.status)">{{ getStatusLabel(recurringPayment.status) }}</ion-badge>
+          </div>
+          <div class="recurring-amount-row">
+            <span class="amount-line">{{ getDisplayAmount(recurringPayment.amount) | currency:selectedCurrency:'symbol':'1.0-2' }}</span>
+          </div>
+          <div class="recurring-frequency-row">
+            <span class="frequency-line">/ {{ getFrequencyLabel(recurringPayment.frequency) }}</span>
+          </div>
+        </div>
       </ion-item>
     </ion-list>
   </div>
