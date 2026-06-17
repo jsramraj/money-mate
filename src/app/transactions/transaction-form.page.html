@@ -111,6 +111,7 @@
         <ion-select *ngIf="!isEditMode" [(ngModel)]="form.recurrenceSelection" interface="action-sheet">
           <ion-select-option value="never">Never</ion-select-option>
           <ion-select-option value="monthly">Monthly</ion-select-option>
+          <ion-select-option *ngIf="form.type !== 'transfer'" value="returnable">Returnable</ion-select-option>
         </ion-select>
 
         <app-recurring-payment-summary

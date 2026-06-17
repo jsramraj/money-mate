@@ -266,9 +266,11 @@ export class TransactionFormPage implements OnInit, OnDestroy {
       : null;
 
     const recurrenceSelection: RecurrenceSelection =
-      this.recurringPaymentDetails?.frequency === 'month' || tx.recurringPaymentId
+      this.recurringPaymentDetails?.frequency === 'month'
         ? 'monthly'
-        : 'never';
+        : this.recurringPaymentDetails?.frequency === 'once'
+          ? 'returnable'
+          : 'never';
 
     const date = new Date(tx.date);
     const yyyy = date.getFullYear();
@@ -309,6 +311,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     }
 
     this.showMoreOptions = false;
+    this.form.recurrenceSelection = 'never';
     this.form.categoryId = '';
     this.form.description = '';
     this.form.notes = '';
@@ -441,14 +444,14 @@ export class TransactionFormPage implements OnInit, OnDestroy {
       id: recurringPaymentId,
       accountId: this.form.accountId,
       amount: storedAmount,
-      type: this.form.type,
+      type: this.getRecurringPaymentType(),
       categoryId: this.form.type === 'transfer' ? '' : (this.form.categoryId || ''),
       description: this.capitalizeDescription(this.form.description.trim()),
       date: new Date(this.form.date),
       notes: this.form.notes.trim() || undefined,
       tags: this.form.tags.length > 0 ? this.form.tags : undefined,
       transferToAccountId: this.form.type === 'transfer' ? this.form.transferToAccountId : undefined,
-      frequency: 'month',
+      frequency: this.getRecurringPaymentFrequency(),
       status: 'active',
       isDeleted: false,
       createdAt: now,
@@ -459,6 +462,22 @@ export class TransactionFormPage implements OnInit, OnDestroy {
 
     await this.db.recurringPayments.add(recurringPayment);
     return recurringPaymentId;
+  }
+
+  private getRecurringPaymentFrequency(): RecurringPayment['frequency'] {
+    if (this.form.recurrenceSelection === 'returnable') {
+      return 'once';
+    }
+
+    return 'month';
+  }
+
+  private getRecurringPaymentType(): TransactionType {
+    if (this.form.recurrenceSelection === 'returnable') {
+      return this.form.type === 'income' ? 'expense' : 'income';
+    }
+
+    return this.form.type;
   }
 
   onDescriptionBlur(event: any) {

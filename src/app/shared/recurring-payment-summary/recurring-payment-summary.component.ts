@@ -89,6 +89,10 @@ export class RecurringPaymentSummaryComponent {
     const frequency = this.recurringPayment?.frequency;
     const anchorDate = this.recurringPayment?.date;
 
+    if (frequency === 'once') {
+      return 'One-off returnable';
+    }
+
     if ((frequency === 'month' || !frequency) && anchorDate) {
       const dayOfMonth = new Date(anchorDate).getDate();
       if (!Number.isNaN(dayOfMonth)) {

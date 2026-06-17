@@ -26,6 +26,7 @@
 
     <ion-list *ngIf="!loading && !error && visibleRecurringPayments.length > 0">
       <ion-item
+        lines="none"
         button
         detail="true"
         class="recurring-list-item"
@@ -38,8 +39,15 @@
 
         <div class="recurring-details">
           <h2>{{ recurringPayment.description || 'Untitled recurring payment' }}</h2>
-          <p class="next-line">Next: {{ getNextPaymentDate(recurringPayment) | date:'MMM d' }}</p>
-          <p class="meta-line">{{ getAccountName(recurringPayment.accountId) }} • {{ getCategoryName(recurringPayment) }}</p>
+          <p class="meta-line">
+            {{ getAccountName(recurringPayment.accountId) }} •
+            <ng-container *ngIf="recurringPayment.frequency === 'once'">
+              {{ recurringPayment.type === 'income' ? 'Incoming' : (recurringPayment.type === 'expense' ? 'Outgoing' : 'Transfer') }}
+            </ng-container>
+            <ng-container *ngIf="recurringPayment.frequency !== 'once'">
+              {{ getCategoryName(recurringPayment) }}
+            </ng-container>
+          </p>
         </div>
 
         <div class="recurring-amount-block">

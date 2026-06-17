@@ -88,6 +88,8 @@ export class UpcomingPaymentsWidgetComponent implements OnDestroy {
             cand.setFullYear(cand.getFullYear() + 1);
           }
           scheduled = cand;
+        } else if (rp.frequency === 'once') {
+          scheduled = new Date(rp.date);
         }
 
         if (!scheduled) continue;

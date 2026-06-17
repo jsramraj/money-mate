@@ -35,12 +35,11 @@ import { AccountRepository, CategoryRepository } from '../core/database/reposito
     IonToolbar,
     IonTitle,
     IonButtons,
-    IonBackButton,
-    IonContent,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonBadge,
+      IonBackButton,
+      IonContent,
+      IonList,
+      IonItem,
+      IonBadge,
     IonIcon,
     IonSpinner,
   ],
@@ -78,7 +77,9 @@ export class RecurringPaymentsPage implements OnInit {
   }
 
   get visibleRecurringPayments(): RecurringPayment[] {
-    return this.recurringPayments.filter((item) => !item.isDeleted && item.status !== 'cancelled');
+    return this.recurringPayments
+      .filter((item) => !item.isDeleted && item.status !== 'cancelled')
+      .sort((a, b) => this.getNextPaymentDate(a).getTime() - this.getNextPaymentDate(b).getTime());
   }
 
   trackByRecurringPaymentId(_: number, recurringPayment: RecurringPayment): string {
@@ -103,6 +104,8 @@ export class RecurringPaymentsPage implements OnInit {
         return 'week';
       case 'year':
         return 'year';
+      case 'once':
+        return 'once';
       default:
         return 'month';
     }
@@ -117,9 +120,15 @@ export class RecurringPaymentsPage implements OnInit {
         return this.getNextWeeklyDate(anchorDate, referenceDate);
       case 'year':
         return this.getNextYearlyDate(anchorDate, referenceDate);
+      case 'once':
+        return this.getOnceDate(anchorDate);
       default:
         return this.getNextMonthlyDate(anchorDate, referenceDate);
     }
+  }
+
+  private getOnceDate(anchorDate: Date): Date {
+    return new Date(anchorDate);
   }
 
   private getNextMonthlyDate(anchorDate: Date, referenceDate: Date): Date {

@@ -14,4 +14,4 @@ export interface Transaction extends AuditableEntity {
 }
 
 export type TransactionType = Transaction['type'];
-export type RecurrenceSelection = 'never' | 'monthly';
+export type RecurrenceSelection = 'never' | 'monthly' | 'returnable';
