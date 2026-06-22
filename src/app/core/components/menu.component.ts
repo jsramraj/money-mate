@@ -1,7 +1,17 @@
 import { Component } from '@angular/core';
 import { addIcons } from 'ionicons';
 import { CommonModule } from '@angular/common';
-import { downloadOutline } from 'ionicons/icons';
+import {
+  cloudUploadOutline,
+  downloadOutline,
+  list,
+  pieChartOutline,
+  pricetagsOutline,
+  repeatOutline,
+  settings,
+  statsChart,
+  walletOutline,
+} from 'ionicons/icons';
 import { RouterLink } from '@angular/router';
 import { AnalyticsService } from '../services';
 import { 
@@ -42,8 +52,18 @@ export class MenuComponent {
   deferredPrompt: any = null;
 
   constructor(private readonly analyticsService: AnalyticsService) {
-    // Register the download-outline icon for IonIcon usage
-    addIcons({ 'download-outline': downloadOutline });
+    // Register menu icons explicitly for standalone usage.
+    addIcons({
+      'stats-chart': statsChart,
+      list,
+      settings,
+      'pricetags-outline': pricetagsOutline,
+      'wallet-outline': walletOutline,
+      'pie-chart-outline': pieChartOutline,
+      'repeat-outline': repeatOutline,
+      'cloud-upload-outline': cloudUploadOutline,
+      'download-outline': downloadOutline,
+    });
 
     // Listen for the beforeinstallprompt event
     window.addEventListener('beforeinstallprompt', (e: Event) => {

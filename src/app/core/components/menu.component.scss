@@ -1,4 +1,20 @@
-// Install footer styles
+.settings-sub-item {
+	--padding-start: 50px;
+	--min-height: 40px;
+	--padding-top: 6px;
+	--padding-bottom: 6px;
+
+	ion-label {
+		font-size: 0.94rem;
+	}
+
+	ion-icon[slot='start'] {
+		font-size: 18px;
+		margin-inline-end: 10px;
+		margin-right: 10px;
+	}
+}
+
 .install-footer {
 	background: var(--ion-color-light);
 	color: var(--ion-text-color);
