@@ -42,8 +42,9 @@ ion-item {
   --padding-bottom: 12px;
   --inner-padding-end: 12px;
   --border-radius: 16px;
-  --background: var(--ion-item-background, var(--ion-color-step-50, #ffffff));
+  --background: var(--ion-item-background);
   margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 ion-badge {
@@ -71,9 +72,11 @@ ion-badge {
   justify-content: center;
   min-width: 68px;
   width: 68px;
+  margin-right: 6px;
   padding: 10px 8px;
   border-radius: 14px;
-  background: var(--ion-color-step-10);
+  background: var(--ion-color-step-150);
+  border: 1px solid var(--ion-color-step-250);
   text-align: center;
 }
 
