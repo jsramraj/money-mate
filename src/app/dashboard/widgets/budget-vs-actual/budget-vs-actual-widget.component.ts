@@ -227,8 +227,7 @@ export class BudgetVsActualWidgetComponent implements OnInit, OnDestroy {
 
     this.items = activeBudgets
       .map((budget) => this.buildBudgetItem(budget, range))
-      .filter((item): item is BudgetVsActualItem => !!item)
-      .sort((a, b) => b.progressPercent - a.progressPercent || b.actualSpent - a.actualSpent);
+      .filter((item): item is BudgetVsActualItem => !!item);
 
     this.hasChartData = this.items.length > 0;
     this.cdr.markForCheck();
