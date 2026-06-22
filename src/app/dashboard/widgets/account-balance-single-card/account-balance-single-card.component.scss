@@ -89,6 +89,10 @@
     font-weight: 700;
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    &.clickable {
+      cursor: pointer;
+    }
   }
 }
 
@@ -136,6 +140,10 @@
     .account-balance {
       font-weight: 600;
       color: white;
+
+      &.clickable {
+        cursor: pointer;
+      }
     }
 
     h3 {

@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonCard, IonCardContent, IonButton, IonIcon, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { chevronForward } from 'ionicons/icons';
 import { AccountRepository } from '../../../core/database/repositories';
@@ -24,12 +25,20 @@ export class AccountBalanceSingleCardComponent implements OnInit {
   totalNonCredit$: Observable<number>;
   totalCredit$: Observable<number>;
   effective$: Observable<number>;
+  firstAccountName$: Observable<string | null>;
 
   expanded = false;
 
-  constructor(private accountRepository: AccountRepository) {
+  constructor(
+    private accountRepository: AccountRepository,
+    private router: Router
+  ) {
     addIcons({ chevronForward });
     this.accounts$ = this.accountRepository.accounts$;
+
+    this.firstAccountName$ = this.accounts$.pipe(
+      map((accounts) => accounts.length === 1 ? accounts[0].name : null)
+    );
 
     this.totalBalance$ = this.accounts$.pipe(
       map((accounts) => accounts.reduce((sum, a) => sum + (a.balance || 0), 0))
@@ -59,6 +68,14 @@ export class AccountBalanceSingleCardComponent implements OnInit {
 
   toggleExpanded(): void {
     this.expanded = !this.expanded;
+  }
+
+  async openAccountDetails(accountName: string | null): Promise<void> {
+    if (!accountName) {
+      return;
+    }
+
+    await this.router.navigate(['/tabs/transactions'], { queryParams: { accountName } });
   }
 
   formatBalance(balance: number): string {

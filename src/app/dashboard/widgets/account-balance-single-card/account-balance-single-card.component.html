@@ -7,11 +7,26 @@
       </ion-button>
     </div>
     <div class="card-middle">
-      <div class="balance">
-        <ng-container *ngIf="totalNonCredit$ | async as totalNonCredit">
-          {{ formatBalance(totalNonCredit) }}
-        </ng-container>
-      </div>
+      <ng-container *ngIf="firstAccountName$ | async as firstAccountName">
+        <div
+          class="balance clickable"
+          (click)="openAccountDetails(firstAccountName)"
+          tabindex="0"
+          role="button"
+          aria-label="View transactions for selected account"
+        >
+          <ng-container *ngIf="totalNonCredit$ | async as totalNonCredit">
+            {{ formatBalance(totalNonCredit) }}
+          </ng-container>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="(firstAccountName$ | async) === null">
+        <div class="balance">
+          <ng-container *ngIf="totalNonCredit$ | async as totalNonCredit">
+            {{ formatBalance(totalNonCredit) }}
+          </ng-container>
+        </div>
+      </ng-container>
       <div class="collapsed-details">
         <div class="detail-item">
           <span>Credit</span>
@@ -37,7 +52,15 @@
         <ion-label>
           <h3>{{ acc.name }}</h3>
         </ion-label>
-        <div class="account-balance">{{ formatBalance(acc.balance) }}</div>
+        <div
+          class="account-balance clickable"
+          (click)="openAccountDetails(acc.name)"
+          tabindex="0"
+          role="button"
+          aria-label="View transactions for {{ acc.name }}"
+        >
+          {{ formatBalance(acc.balance) }}
+        </div>
       </ion-item>
     </ion-list>
   </ion-card-content>
