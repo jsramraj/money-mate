@@ -26,9 +26,15 @@ import {
 import { NavController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { calendarOutline, saveOutline } from 'ionicons/icons';
-import { RecurringPayment } from '../core/database/models';
+import { RecurringPayment, Transaction } from '../core/database/models';
 import { DatabaseService } from '../core/database/database.service';
-import { AccountRepository, CategoryRepository } from '../core/database/repositories';
+import { AccountRepository, CategoryRepository, TransactionRepository } from '../core/database/repositories';
+
+interface ExecutionHistoryRow {
+  id: string;
+  date: Date;
+  amount: number;
+}
 
 @Component({
   selector: 'app-recurring-payment-detail',
@@ -64,6 +70,9 @@ export class RecurringPaymentDetailPage {
   loading = true;
   saving = false;
   error: string | null = null;
+  executionRows: ExecutionHistoryRow[] = [];
+  executionLoading = false;
+  executionError: string | null = null;
   descriptionValue = '';
   amountValue: number | null = null;
   dateValue = '';
@@ -76,6 +85,7 @@ export class RecurringPaymentDetailPage {
     private readonly db: DatabaseService,
     private readonly accountRepository: AccountRepository,
     private readonly categoryRepository: CategoryRepository,
+    private readonly transactionRepository: TransactionRepository,
     private readonly navController: NavController,
     private readonly toastController: ToastController,
     private readonly cdr: ChangeDetectorRef,
@@ -158,6 +168,10 @@ export class RecurringPaymentDetailPage {
     }
   }
 
+  trackByExecutionRowId(_index: number, row: ExecutionHistoryRow): string {
+    return row.id;
+  }
+
   async save(): Promise<void> {
     if (!this.recurringPayment || !this.canSave) {
       return;
@@ -199,6 +213,8 @@ export class RecurringPaymentDetailPage {
     try {
       this.loading = true;
       this.error = null;
+      this.executionError = null;
+      this.executionRows = [];
 
       const [recurringPayment, accounts, categories] = await Promise.all([
         this.db.recurringPayments.get(recurringPaymentId),
@@ -219,6 +235,8 @@ export class RecurringPaymentDetailPage {
       this.amountValue = Math.abs(recurringPayment.amount);
       this.dateValue = this.toDateValue(recurringPayment.date);
       this.statusValue = recurringPayment.status;
+
+      await this.loadExecutionHistory(recurringPayment.id);
     } catch (error) {
       console.error('Failed to load recurring payment:', error);
       this.error = 'Failed to load recurring payment';
@@ -227,6 +245,35 @@ export class RecurringPaymentDetailPage {
       this.loading = false;
       this.cdr.markForCheck();
     }
+  }
+
+  private async loadExecutionHistory(recurringPaymentId: string): Promise<void> {
+    try {
+      this.executionLoading = true;
+      this.executionError = null;
+
+      const transactions = await this.transactionRepository.queryTransactions(
+        { recurringPaymentIds: [recurringPaymentId] },
+        { sortDirection: 'desc', limit: 10 },
+      );
+
+      this.executionRows = transactions.map((transaction) => this.toExecutionHistoryRow(transaction));
+    } catch (error) {
+      console.error('Failed to load recurring payment execution history:', error);
+      this.executionError = 'Failed to load transaction history';
+      this.executionRows = [];
+    } finally {
+      this.executionLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private toExecutionHistoryRow(transaction: Transaction): ExecutionHistoryRow {
+    return {
+      id: transaction.id,
+      date: new Date(transaction.date),
+      amount: transaction.amount,
+    };
   }
 
   private toDateValue(dateInput: Date | string): string {

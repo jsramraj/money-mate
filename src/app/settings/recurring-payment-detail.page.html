@@ -89,6 +89,34 @@
       </ion-list>
     </section>
 
+    <section class="section-block">
+      <div class="section-title">Transaction History</div>
+
+      <div class="history-state" *ngIf="executionLoading">
+        <p>Loading transaction history...</p>
+      </div>
+
+      <ion-note color="danger" class="history-error" *ngIf="!executionLoading && executionError">
+        {{ executionError }}
+      </ion-note>
+
+      <p class="history-empty" *ngIf="!executionLoading && !executionError && executionRows.length === 0">
+        No transactions recorded for this recurring payment.
+      </p>
+
+      <div class="history-table" *ngIf="!executionLoading && !executionError && executionRows.length > 0">
+        <div class="history-table__head">
+          <span>Date</span>
+          <span>Amount</span>
+        </div>
+
+        <div class="history-table__row" *ngFor="let row of executionRows; trackBy: trackByExecutionRowId">
+          <span>{{ row.date | date:'MMM d, y' }}</span>
+          <span class="history-table__amount">{{ row.amount | currency }}</span>
+        </div>
+      </div>
+    </section>
+
     <ion-note color="medium" class="helper-text">
       Account, category, frequency, and transaction type stay fixed for this recurring payment.
     </ion-note>

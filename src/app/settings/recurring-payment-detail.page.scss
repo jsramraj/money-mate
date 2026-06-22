@@ -68,6 +68,55 @@
   line-height: 1.4;
 }
 
+.history-state,
+.history-empty {
+  margin: 0;
+  padding: 8px 4px 2px;
+  font-size: 0.92rem;
+  color: var(--ion-color-medium);
+}
+
+.history-error {
+  display: block;
+  margin: 2px 4px 0;
+}
+
+.history-table {
+  border: 1px solid var(--ion-color-step-150, #dfdfdf);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.history-table__head,
+.history-table__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+}
+
+.history-table__head {
+  background: var(--ion-color-step-100, #f3f3f3);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ion-color-medium);
+}
+
+.history-table__row {
+  font-size: 0.94rem;
+  color: var(--ion-text-color);
+  border-top: 1px solid var(--ion-color-step-100, #f3f3f3);
+}
+
+.history-table__amount {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 ion-item {
   --padding-start: 12px;
   --inner-padding-end: 12px;
