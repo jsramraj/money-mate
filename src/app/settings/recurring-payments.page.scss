@@ -6,6 +6,19 @@ ion-list {
   background: transparent;
 }
 
+.recurring-group + .recurring-group {
+  margin-top: 6px;
+}
+
+.group-heading {
+  margin: 6px 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ion-color-medium);
+}
+
 .loading-state,
 .error-state,
 .empty-state {
@@ -25,7 +38,8 @@ ion-list {
 
 ion-item {
   --padding-start: 12px;
-  --padding-bottom: 14px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
   --inner-padding-end: 12px;
   --border-radius: 16px;
   --background: var(--ion-item-background, var(--ion-color-step-50, #ffffff));
@@ -44,6 +58,7 @@ ion-badge {
 }
 
 .recurring-list-item h2 {
+  margin-top: 0;
   margin-bottom: 6px;
   font-size: 1rem;
   font-weight: 600;
@@ -81,6 +96,10 @@ ion-badge {
 .recurring-details {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: center;
 }
 
 .recurring-amount-block {
@@ -93,7 +112,6 @@ ion-badge {
   gap: 4px;
 }
 
-.recurring-status-row,
 .recurring-amount-row,
 .recurring-frequency-row {
   display: flex;
@@ -111,9 +129,46 @@ ion-badge {
   color: var(--ion-text-color);
 }
 
+.amount-line.incoming-amount {
+  color: var(--ion-color-success);
+}
+
+.amount-line.outgoing-amount {
+  color: var(--ion-color-danger);
+}
+
+.amount-line.transfer-amount {
+  color: var(--ion-color-medium);
+}
+
 .frequency-line {
   font-size: 0.8rem;
   color: var(--ion-color-medium);
+}
+
+.recurring-frequency-row {
+  align-items: center;
+  gap: 6px;
+}
+
+ion-badge.cadence-chip {
+  margin-left: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: none;
+}
+
+ion-badge.cadence-chip.one-off-chip {
+  --background: var(--ion-color-primary);
+  --color: var(--ion-color-primary-contrast);
+}
+
+ion-badge.cadence-chip.recurring-chip {
+  --background: var(--ion-color-primary);
+  --color: var(--ion-color-primary-contrast);
 }
 
 .recurring-details p {

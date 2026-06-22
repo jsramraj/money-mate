@@ -77,21 +77,23 @@ export class RecurringPaymentsPage implements OnInit {
   }
 
   get visibleRecurringPayments(): RecurringPayment[] {
-    return this.recurringPayments
-      .filter((item) => !item.isDeleted && item.status !== 'cancelled')
+    return this.recurringPayments.filter((item) => !item.isDeleted && item.status !== 'cancelled');
+  }
+
+  get activeRecurringPayments(): RecurringPayment[] {
+    return this.visibleRecurringPayments
+      .filter((item) => item.status !== 'paused')
+      .sort((a, b) => this.getNextPaymentDate(a).getTime() - this.getNextPaymentDate(b).getTime());
+  }
+
+  get pausedRecurringPayments(): RecurringPayment[] {
+    return this.visibleRecurringPayments
+      .filter((item) => item.status === 'paused')
       .sort((a, b) => this.getNextPaymentDate(a).getTime() - this.getNextPaymentDate(b).getTime());
   }
 
   trackByRecurringPaymentId(_: number, recurringPayment: RecurringPayment): string {
     return recurringPayment.id;
-  }
-
-  getStatusLabel(status: RecurringPayment['status']): string {
-    return status === 'paused' ? 'Paused' : 'Active';
-  }
-
-  getStatusColor(status: RecurringPayment['status']): 'success' | 'warning' {
-    return status === 'paused' ? 'warning' : 'success';
   }
 
   getDisplayAmount(amount: number): number {

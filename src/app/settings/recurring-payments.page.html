@@ -21,47 +21,109 @@
     <div class="empty-state" *ngIf="!loading && !error && visibleRecurringPayments.length === 0">
       <ion-icon name="repeat-outline"></ion-icon>
       <h2>No recurring payments</h2>
-      <p>Active or paused recurring payments will appear here.</p>
+      <p>Active and paused recurring payments will appear here.</p>
     </div>
 
     <ion-list *ngIf="!loading && !error && visibleRecurringPayments.length > 0">
-      <ion-item
-        lines="none"
-        button
-        detail="true"
-        class="recurring-list-item"
-        *ngFor="let recurringPayment of visibleRecurringPayments; trackBy: trackByRecurringPaymentId"
-        (click)="openEditPage(recurringPayment)">
-        <div class="recurring-date-block">
-          <span class="recurring-date-month">{{ getNextPaymentDate(recurringPayment) | date:'MMM' }}</span>
-          <span class="recurring-date-day">{{ getNextPaymentDate(recurringPayment) | date:'d' }}</span>
-        </div>
+      <div class="recurring-group" *ngIf="activeRecurringPayments.length > 0">
+        <div class="group-heading">Active</div>
+        <ion-item
+          lines="none"
+          button
+          detail="true"
+          class="recurring-list-item"
+          *ngFor="let recurringPayment of activeRecurringPayments; trackBy: trackByRecurringPaymentId"
+          (click)="openEditPage(recurringPayment)">
+          <div class="recurring-date-block">
+            <span class="recurring-date-month">{{ getNextPaymentDate(recurringPayment) | date:'MMM' }}</span>
+            <span class="recurring-date-day">{{ getNextPaymentDate(recurringPayment) | date:'d' }}</span>
+          </div>
 
-        <div class="recurring-details">
-          <h2>{{ recurringPayment.description || 'Untitled recurring payment' }}</h2>
-          <p class="meta-line">
-            {{ getAccountName(recurringPayment.accountId) }} •
-            <ng-container *ngIf="recurringPayment.frequency === 'once'">
-              {{ recurringPayment.type === 'income' ? 'Incoming' : (recurringPayment.type === 'expense' ? 'Outgoing' : 'Transfer') }}
-            </ng-container>
-            <ng-container *ngIf="recurringPayment.frequency !== 'once'">
-              {{ getCategoryName(recurringPayment) }}
-            </ng-container>
-          </p>
-        </div>
+          <div class="recurring-details">
+            <h2>{{ recurringPayment.description || 'Untitled recurring payment' }}</h2>
+            <p class="meta-line">
+              {{ getAccountName(recurringPayment.accountId) }} •
+              <ng-container *ngIf="recurringPayment.frequency === 'once'">
+                {{ recurringPayment.type === 'income' ? 'Incoming' : (recurringPayment.type === 'expense' ? 'Outgoing' : 'Transfer') }}
+              </ng-container>
+              <ng-container *ngIf="recurringPayment.frequency !== 'once'">
+                {{ getCategoryName(recurringPayment) }}
+              </ng-container>
+            </p>
+          </div>
 
-        <div class="recurring-amount-block">
-          <div class="recurring-status-row">
-            <ion-badge [color]="getStatusColor(recurringPayment.status)">{{ getStatusLabel(recurringPayment.status) }}</ion-badge>
+          <div class="recurring-amount-block">
+            <div class="recurring-amount-row">
+              <span
+                class="amount-line"
+                [class.incoming-amount]="recurringPayment.type === 'income'"
+                [class.outgoing-amount]="recurringPayment.type === 'expense'"
+                [class.transfer-amount]="recurringPayment.type === 'transfer'">
+                {{ getDisplayAmount(recurringPayment.amount) | currency:selectedCurrency:'symbol':'1.0-2' }}
+              </span>
+            </div>
+            <div class="recurring-frequency-row">
+              <ion-badge
+                class="cadence-chip"
+                [class.one-off-chip]="recurringPayment.frequency === 'once'"
+                [class.recurring-chip]="recurringPayment.frequency !== 'once'">
+                {{ recurringPayment.frequency === 'once' ? 'One-off' : 'Recurring' }}
+              </ion-badge>
+              <span class="frequency-line" *ngIf="recurringPayment.frequency !== 'once'">/ {{ getFrequencyLabel(recurringPayment.frequency) }}</span>
+            </div>
           </div>
-          <div class="recurring-amount-row">
-            <span class="amount-line">{{ getDisplayAmount(recurringPayment.amount) | currency:selectedCurrency:'symbol':'1.0-2' }}</span>
+        </ion-item>
+      </div>
+
+      <div class="recurring-group" *ngIf="pausedRecurringPayments.length > 0">
+        <div class="group-heading">Paused</div>
+        <ion-item
+          lines="none"
+          button
+          detail="true"
+          class="recurring-list-item"
+          *ngFor="let recurringPayment of pausedRecurringPayments; trackBy: trackByRecurringPaymentId"
+          (click)="openEditPage(recurringPayment)">
+          <div class="recurring-date-block">
+            <span class="recurring-date-month">{{ getNextPaymentDate(recurringPayment) | date:'MMM' }}</span>
+            <span class="recurring-date-day">{{ getNextPaymentDate(recurringPayment) | date:'d' }}</span>
           </div>
-          <div class="recurring-frequency-row">
-            <span class="frequency-line">/ {{ getFrequencyLabel(recurringPayment.frequency) }}</span>
+
+          <div class="recurring-details">
+            <h2>{{ recurringPayment.description || 'Untitled recurring payment' }}</h2>
+            <p class="meta-line">
+              {{ getAccountName(recurringPayment.accountId) }} •
+              <ng-container *ngIf="recurringPayment.frequency === 'once'">
+                {{ recurringPayment.type === 'income' ? 'Incoming' : (recurringPayment.type === 'expense' ? 'Outgoing' : 'Transfer') }}
+              </ng-container>
+              <ng-container *ngIf="recurringPayment.frequency !== 'once'">
+                {{ getCategoryName(recurringPayment) }}
+              </ng-container>
+            </p>
           </div>
-        </div>
-      </ion-item>
+
+          <div class="recurring-amount-block">
+            <div class="recurring-amount-row">
+              <span
+                class="amount-line"
+                [class.incoming-amount]="recurringPayment.type === 'income'"
+                [class.outgoing-amount]="recurringPayment.type === 'expense'"
+                [class.transfer-amount]="recurringPayment.type === 'transfer'">
+                {{ getDisplayAmount(recurringPayment.amount) | currency:selectedCurrency:'symbol':'1.0-2' }}
+              </span>
+            </div>
+            <div class="recurring-frequency-row">
+              <ion-badge
+                class="cadence-chip"
+                [class.one-off-chip]="recurringPayment.frequency === 'once'"
+                [class.recurring-chip]="recurringPayment.frequency !== 'once'">
+                {{ recurringPayment.frequency === 'once' ? 'One-off' : 'Recurring' }}
+              </ion-badge>
+              <span class="frequency-line" *ngIf="recurringPayment.frequency !== 'once'">/ {{ getFrequencyLabel(recurringPayment.frequency) }}</span>
+            </div>
+          </div>
+        </ion-item>
+      </div>
     </ion-list>
   </div>
 </ion-content>
