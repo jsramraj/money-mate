@@ -1,0 +1,41 @@
+<ion-card class="income-expenses-widget-card">
+  <ion-card-content>
+    <div class="widget-header">
+      <h3>Income vs Expenses</h3>
+    </div>
+
+    <ion-text color="medium" *ngIf="loading">
+      <p class="state-text">Loading totals...</p>
+    </ion-text>
+
+    <ion-text color="danger" *ngIf="!loading && error">
+      <p class="state-text">{{ error }}</p>
+    </ion-text>
+
+    <div class="metric-row" *ngIf="!loading && !error">
+      <div class="metric-card income-card" aria-label="Income total">
+        <div class="metric-label-row">
+          <ion-icon name="arrow-up-outline" aria-hidden="true"></ion-icon>
+          <span class="metric-label">Income</span>
+        </div>
+        <p class="metric-value">{{ formatAmount(incomeTotal) }}</p>
+      </div>
+
+      <div class="metric-card expense-card" aria-label="Expense total">
+        <div class="metric-label-row">
+          <ion-icon name="arrow-down-outline" aria-hidden="true"></ion-icon>
+          <span class="metric-label">Expenses</span>
+        </div>
+        <p class="metric-value">{{ formatAmount(expenseTotal) }}</p>
+      </div>
+    </div>
+
+    <div class="net-row" *ngIf="!loading && !error" [class]="netToneClass">
+      <ion-icon name="stats-chart-outline" aria-hidden="true"></ion-icon>
+      <span>Net:</span>
+      <strong>
+        {{ netTotal < 0 ? '-' : '' }}{{ formatAmount(netTotal) }}
+      </strong>
+    </div>
+  </ion-card-content>
+</ion-card>

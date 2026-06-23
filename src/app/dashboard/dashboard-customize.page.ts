@@ -88,6 +88,7 @@ export class DashboardCustomizePage {
       'daily-expenses',
       'expense-breakdown',
       'expense-comparison',
+      'income-expenses-dual-card',
       'recent-transactions',
       'budget-vs-actual',
       'upcoming-payments',

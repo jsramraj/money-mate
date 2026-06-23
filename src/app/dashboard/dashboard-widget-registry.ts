@@ -5,6 +5,7 @@ import { BudgetVsActualWidgetComponent } from './widgets/budget-vs-actual/budget
 import { DailyExpensesWidgetComponent } from './widgets/daily-expenses/daily-expenses-widget.component';
 import { ExpenseBreakdownWidgetComponent } from './widgets/expense-breakdown/expense-breakdown-widget.component';
 import { ExpenseComparisonWidgetComponent } from './widgets/expense-comparison/expense-comparison-widget.component';
+import { IncomeExpensesDualCardWidgetComponent } from './widgets/income-expenses-dual-card/income-expenses-dual-card-widget.component';
 import { RecentTransactionsWidgetComponent } from './widgets/recent-transactions/recent-transactions-widget.component';
 import { UpcomingPaymentsWidgetComponent } from './widgets/upcoming-payments/upcoming-payments-widget.component';
 
@@ -15,6 +16,7 @@ export type DashboardWidgetId =
   | 'daily-expenses'
   | 'expense-breakdown'
   | 'expense-comparison'
+  | 'income-expenses-dual-card'
   | 'recent-transactions'
   | 'upcoming-payments';
 
@@ -67,6 +69,13 @@ export const DASHBOARD_WIDGET_DEFINITIONS: DashboardWidgetDefinition[] = [
     title: 'Expense Comparison',
     subtitle: 'This month vs monthly average by category',
     component: ExpenseComparisonWidgetComponent,
+    defaultVisible: false
+  },
+  {
+    id: 'income-expenses-dual-card',
+    title: 'Income vs Expenses',
+    subtitle: 'Side-by-side totals with net balance',
+    component: IncomeExpensesDualCardWidgetComponent,
     defaultVisible: false
   },
   {

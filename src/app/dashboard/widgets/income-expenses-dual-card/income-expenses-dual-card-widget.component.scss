@@ -1,0 +1,138 @@
+.income-expenses-widget-card {
+  margin: 12px 8px;
+
+  ion-card-content {
+    padding: 14px 12px;
+  }
+
+  .widget-header {
+    margin-bottom: 12px;
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ion-text-color);
+    }
+
+    p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--ion-color-medium);
+    }
+  }
+
+  .state-text {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .metric-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .metric-card {
+    flex: 1;
+    border-radius: 14px;
+    padding: 12px 10px;
+    min-width: 0;
+    border: 1px solid transparent;
+  }
+
+  .metric-label-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+
+    ion-icon {
+      font-size: 16px;
+    }
+  }
+
+  .metric-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+
+  .metric-value {
+    margin: 0;
+    font-size: clamp(16px, 4.6vw, 24px);
+    font-weight: 700;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .income-card {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--ion-color-success-rgb), 0.2) 0%,
+      rgba(var(--ion-color-success-rgb), 0.08) 100%
+    );
+    border-color: rgba(var(--ion-color-success-rgb), 0.35);
+    color: var(--ion-color-success-contrast);
+
+    .metric-label,
+    .metric-value,
+    ion-icon {
+      color: var(--ion-color-success-shade);
+    }
+  }
+
+  .expense-card {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--ion-color-danger-rgb), 0.18) 0%,
+      rgba(var(--ion-color-danger-rgb), 0.08) 100%
+    );
+    border-color: rgba(var(--ion-color-danger-rgb), 0.34);
+    color: var(--ion-color-danger-contrast);
+
+    .metric-label,
+    .metric-value,
+    ion-icon {
+      color: var(--ion-color-danger-shade);
+    }
+  }
+
+  .net-row {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 6px 10px;
+    background: var(--ion-color-light);
+    border: 1px solid var(--ion-color-light-shade);
+    font-size: 13px;
+
+    &.net-positive {
+      color: var(--ion-color-success-shade);
+    }
+
+    &.net-negative {
+      color: var(--ion-color-danger-shade);
+    }
+
+    &.net-neutral {
+      color: var(--ion-color-medium-shade);
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .income-expenses-widget-card {
+    .metric-row {
+      gap: 8px;
+    }
+
+    .metric-card {
+      padding: 10px 8px;
+    }
+  }
+}
