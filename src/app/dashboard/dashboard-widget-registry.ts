@@ -3,6 +3,7 @@ import { AccountBalanceCarouselComponent } from './widgets/account-balance-carou
 import { AccountBalanceSingleCardComponent } from './widgets/account-balance-single-card/account-balance-single-card.component';
 import { BudgetVsActualWidgetComponent } from './widgets/budget-vs-actual/budget-vs-actual-widget.component';
 import { DailyExpensesWidgetComponent } from './widgets/daily-expenses/daily-expenses-widget.component';
+import { ExpenseCategoryDeltaWidgetComponent } from './widgets/expense-category-delta/expense-category-delta-widget.component';
 import { ExpenseBreakdownWidgetComponent } from './widgets/expense-breakdown/expense-breakdown-widget.component';
 import { ExpenseComparisonWidgetComponent } from './widgets/expense-comparison/expense-comparison-widget.component';
 import { IncomeExpensesDualCardWidgetComponent } from './widgets/income-expenses-dual-card/income-expenses-dual-card-widget.component';
@@ -14,6 +15,7 @@ export type DashboardWidgetId =
   | 'account-balance-single'
   | 'budget-vs-actual'
   | 'daily-expenses'
+  | 'expense-category-delta'
   | 'expense-breakdown'
   | 'expense-comparison'
   | 'income-expenses-dual-card'
@@ -49,6 +51,13 @@ export const DASHBOARD_WIDGET_DEFINITIONS: DashboardWidgetDefinition[] = [
     subtitle: 'Compare budget targets against actual spend',
     component: BudgetVsActualWidgetComponent,
     defaultVisible: false,
+  },
+  {
+    id: 'expense-category-delta',
+    title: 'Expense Category Delta',
+    subtitle: 'Current spend vs previous period and last 12-month average',
+    component: ExpenseCategoryDeltaWidgetComponent,
+    defaultVisible: false
   },
   {
     id: 'expense-breakdown',

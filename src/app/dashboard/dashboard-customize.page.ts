@@ -86,6 +86,7 @@ export class DashboardCustomizePage {
     const supportedWidgetIds = new Set([
       'top-summary',
       'daily-expenses',
+      'expense-category-delta',
       'expense-breakdown',
       'expense-comparison',
       'income-expenses-dual-card',

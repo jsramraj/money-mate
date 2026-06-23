@@ -1,0 +1,59 @@
+<ion-card class="expense-category-delta-card">
+  <ion-card-header>
+    <div class="header-row">
+      <div>
+        <ion-card-title>Expense Category Delta</ion-card-title>
+        <ion-card-subtitle>Selected period vs last 12-month average</ion-card-subtitle>
+      </div>
+
+      <ion-button
+        fill="clear"
+        class="settings-button"
+        [class.has-saved-selection]="hasSavedSettings"
+        [attr.aria-label]="hasSavedSettings ? 'Edit widget settings' : 'Open widget settings'"
+        (click)="openCategorySettings()"
+      >
+        <ion-icon slot="icon-only" [name]="settingsIconName"></ion-icon>
+      </ion-button>
+    </div>
+  </ion-card-header>
+
+  <ion-card-content>
+    <ion-text color="medium" *ngIf="loading">
+      <p class="state-text">Loading expense category deltas...</p>
+    </ion-text>
+
+    <ion-text color="danger" *ngIf="!loading && error">
+      <p class="state-text">{{ error }}</p>
+    </ion-text>
+
+    <ion-text color="medium" *ngIf="!loading && !error && !hasItems">
+      <p class="state-text">No expense transactions found for this range.</p>
+    </ion-text>
+
+    <div class="delta-list" *ngIf="!loading && !error && hasItems">
+      <div class="delta-row" *ngFor="let row of rows; trackBy: trackByCategoryId">
+        <div class="delta-row__header">
+          <ion-icon [name]="getRowIcon(row)" [style.color]="row.categoryColor"></ion-icon>
+          <div class="delta-row__title">
+            <h3>{{ row.categoryName }}</h3>
+            <p>{{ row.last12MonthsAvgAmount | currency:selectedCurrency }} / last 12-month avg</p>
+          </div>
+          <ion-text [color]="row.remainingFromAverage >= 0 ? 'success' : 'danger'" class="delta-row__status">
+            {{ row.statusLabel }}
+          </ion-text>
+        </div>
+
+        <ion-progress-bar [value]="row.progressBarValue" [ngClass]="row.progressClass"></ion-progress-bar>
+
+        <div class="delta-row__stats">
+          <span>Actual: {{ row.selectedPeriodAmount | currency:selectedCurrency }}</span>
+          <span>Remaining: {{ row.remainingFromAverage | currency:selectedCurrency }}</span>
+          <span>{{ row.progressPercent | number:'1.0-0' }}%</span>
+          <span>{{ row.fromLastMonthLabel }}</span>
+          <span>{{ row.fromAverageLabel }}</span>
+        </div>
+      </div>
+    </div>
+  </ion-card-content>
+</ion-card>

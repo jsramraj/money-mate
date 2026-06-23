@@ -1,0 +1,135 @@
+.expense-category-delta-card {
+  margin: 12px 8px;
+
+  ion-card-header {
+    padding: 16px 12px 8px;
+  }
+
+  .header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .settings-button {
+    margin: -6px -8px 0 0;
+    --color: var(--ion-color-medium);
+
+    &.has-saved-selection {
+      --color: var(--ion-color-primary);
+    }
+  }
+
+  ion-card-content {
+    padding: 0 12px 12px;
+  }
+
+  .state-text {
+    margin: 0;
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .delta-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .delta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--ion-color-step-150, rgba(0, 0, 0, 0.08));
+    border-radius: 14px;
+    background: var(--ion-color-step-50, rgba(0, 0, 0, 0.03));
+  }
+
+  .delta-row__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .delta-row__header ion-icon {
+    font-size: 24px;
+    flex: 0 0 auto;
+  }
+
+  .delta-row__title {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .delta-row__title h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .delta-row__title p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--ion-color-medium);
+  }
+
+  .delta-row__status {
+    font-size: 12px;
+    font-weight: 600;
+    flex: 0 0 auto;
+  }
+
+  .delta-row__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    font-size: 12px;
+    color: var(--ion-color-medium-shade, var(--ion-color-medium));
+  }
+
+  ion-progress-bar {
+    --background: var(--ion-color-step-200, rgba(0, 0, 0, 0.12));
+    height: 8px;
+    border-radius: 999px;
+  }
+
+  ion-progress-bar.progress-safe {
+    --progress-background: var(--ion-color-success);
+  }
+
+  ion-progress-bar.progress-warning {
+    --progress-background: var(--ion-color-warning);
+  }
+
+  ion-progress-bar.progress-near-limit {
+    --progress-background: var(--ion-color-warning-shade);
+  }
+
+  ion-progress-bar.progress-exceeded {
+    --progress-background: var(--ion-color-danger);
+  }
+}
+
+@media (max-width: 480px) {
+  .expense-category-delta-card {
+    margin: 10px 6px;
+
+    ion-card-header {
+      padding: 14px 10px 8px;
+    }
+
+    ion-card-content {
+      padding: 0 10px 10px;
+    }
+
+    .delta-row__stats {
+      gap: 8px 10px;
+    }
+  }
+}
