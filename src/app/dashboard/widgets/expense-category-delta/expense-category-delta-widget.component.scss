@@ -53,7 +53,7 @@
 
   .delta-row__header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
   }
 
@@ -73,24 +73,68 @@
     font-weight: 700;
   }
 
-  .delta-row__title p {
-    margin: 2px 0 0;
-    font-size: 12px;
-    color: var(--ion-color-medium);
+  .delta-row__actual {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: right;
+    color: var(--ion-text-color);
   }
 
-  .delta-row__status {
-    font-size: 12px;
-    font-weight: 600;
+  .delta-row__amount-block {
     flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
   }
 
-  .delta-row__stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 14px;
-    font-size: 12px;
+  .delta-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .delta-inline--right {
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+
+  .delta-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 58px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+    border: 1px solid transparent;
+  }
+
+  .delta-caption {
     color: var(--ion-color-medium-shade, var(--ion-color-medium));
+    font-size: 12px;
+  }
+
+  .delta-good {
+    color: var(--ion-color-success-shade, var(--ion-color-success));
+    background: rgba(var(--ion-color-success-rgb), 0.16);
+    border-color: rgba(var(--ion-color-success-rgb), 0.22);
+  }
+
+  .delta-bad {
+    color: var(--ion-color-danger-shade, var(--ion-color-danger));
+    background: rgba(var(--ion-color-danger-rgb), 0.16);
+    border-color: rgba(var(--ion-color-danger-rgb), 0.22);
+  }
+
+  .delta-neutral {
+    color: var(--ion-color-medium-shade, var(--ion-color-medium));
+    background: rgba(var(--ion-color-medium-rgb), 0.14);
+    border-color: rgba(var(--ion-color-medium-rgb), 0.2);
   }
 
   ion-progress-bar {
@@ -99,19 +143,11 @@
     border-radius: 999px;
   }
 
-  ion-progress-bar.progress-safe {
+  ion-progress-bar.progress-under {
     --progress-background: var(--ion-color-success);
   }
 
-  ion-progress-bar.progress-warning {
-    --progress-background: var(--ion-color-warning);
-  }
-
-  ion-progress-bar.progress-near-limit {
-    --progress-background: var(--ion-color-warning-shade);
-  }
-
-  ion-progress-bar.progress-exceeded {
+  ion-progress-bar.progress-over {
     --progress-background: var(--ion-color-danger);
   }
 }

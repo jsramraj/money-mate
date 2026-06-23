@@ -31,23 +31,15 @@ interface CategoryExpenseDeltaRow {
   categoryName: string;
   categoryIcon: string;
   categoryColor: string;
+  progressBarColor: string;
   selectedPeriodAmount: number;
   lastMonthAmount: number;
   last12MonthsAvgAmount: number;
   remainingFromAverage: number;
   progressPercent: number;
   progressBarValue: number;
-  statusLabel: 'Safe' | 'Warning' | 'Near limit' | 'Exceeded';
-  progressClass: 'progress-safe' | 'progress-warning' | 'progress-near-limit' | 'progress-exceeded';
   fromLastMonthDeltaPercent: number | null;
   fromAverageDeltaPercent: number | null;
-  fromLastMonthLabel: string;
-  fromAverageLabel: string;
-}
-
-interface ProgressState {
-  label: 'Safe' | 'Warning' | 'Near limit' | 'Exceeded';
-  className: 'progress-safe' | 'progress-warning' | 'progress-near-limit' | 'progress-exceeded';
 }
 
 @Component({
@@ -149,6 +141,24 @@ export class ExpenseCategoryDeltaWidgetComponent implements OnInit, OnDestroy {
 
   trackByCategoryId(_: number, row: CategoryExpenseDeltaRow): string {
     return row.categoryId;
+  }
+
+  getDeltaToneClass(value: number | null): 'delta-good' | 'delta-bad' | 'delta-neutral' {
+    if (value === null || value === 0) {
+      return 'delta-neutral';
+    }
+
+    return value < 0 ? 'delta-good' : 'delta-bad';
+  }
+
+  formatDeltaChip(value: number | null): string {
+    if (value === null) {
+      return 'N/A';
+    }
+
+    const rounded = Math.ceil(Math.abs(value));
+    const sign = value >= 0 ? '+' : '-';
+    return `${sign}${rounded}%`;
   }
 
   async openCategorySettings(): Promise<void> {
@@ -342,7 +352,7 @@ export class ExpenseCategoryDeltaWidgetComponent implements OnInit, OnDestroy {
     const last12MonthsAvgAmount = fixedLast12MonthsTotal / 12;
     const remainingFromAverage = last12MonthsAvgAmount - selectedPeriodAmount;
     const progressPercent = this.calculateProgressPercent(selectedPeriodAmount, last12MonthsAvgAmount);
-    const progressState = this.getProgressState(progressPercent, last12MonthsAvgAmount, selectedPeriodAmount);
+    const resolvedCategoryColor = category?.color || 'var(--ion-color-primary)';
     const fromLastMonthDeltaPercent = this.calculateDeltaPercent(selectedPeriodAmount, lastMonthAmount);
     const fromAverageDeltaPercent = this.calculateDeltaPercent(selectedPeriodAmount, last12MonthsAvgAmount);
 
@@ -350,19 +360,16 @@ export class ExpenseCategoryDeltaWidgetComponent implements OnInit, OnDestroy {
       categoryId,
       categoryName: this.resolveCategoryName(categoryId, category),
       categoryIcon: category?.icon || this.defaultIcon,
-      categoryColor: category?.color || 'var(--ion-color-medium)',
+      categoryColor: resolvedCategoryColor,
+      progressBarColor: resolvedCategoryColor,
       selectedPeriodAmount,
       lastMonthAmount,
       last12MonthsAvgAmount,
       remainingFromAverage,
       progressPercent,
       progressBarValue: Math.min(1, progressPercent / 100),
-      statusLabel: progressState.label,
-      progressClass: progressState.className,
       fromLastMonthDeltaPercent,
       fromAverageDeltaPercent,
-      fromLastMonthLabel: this.formatLastMonthDeltaLabel(fromLastMonthDeltaPercent),
-      fromAverageLabel: this.formatAverageDeltaLabel(fromAverageDeltaPercent),
     };
   }
 
@@ -372,62 +379,6 @@ export class ExpenseCategoryDeltaWidgetComponent implements OnInit, OnDestroy {
     }
 
     return Math.max(0, (selectedAmount / averageAmount) * 100);
-  }
-
-  private getProgressState(
-    progressPercent: number,
-    averageAmount: number,
-    selectedAmount: number,
-  ): ProgressState {
-    if (averageAmount <= 0) {
-      return selectedAmount > 0
-        ? { label: 'Exceeded', className: 'progress-exceeded' }
-        : { label: 'Safe', className: 'progress-safe' };
-    }
-
-    if (progressPercent <= 50) {
-      return { label: 'Safe', className: 'progress-safe' };
-    }
-
-    if (progressPercent <= 80) {
-      return { label: 'Warning', className: 'progress-warning' };
-    }
-
-    if (progressPercent <= 100) {
-      return { label: 'Near limit', className: 'progress-near-limit' };
-    }
-
-    return { label: 'Exceeded', className: 'progress-exceeded' };
-  }
-
-  private formatSignedPercent(value: number): string {
-    const rounded = Math.abs(value).toFixed(1);
-    const sign = value >= 0 ? '+' : '-';
-    return `${sign}${rounded}%`;
-  }
-
-  private formatLastMonthDeltaLabel(value: number | null): string {
-    if (value === null) {
-      return 'N/A from last month';
-    }
-
-    return `${this.formatSignedPercent(value)} from last month`;
-  }
-
-  private formatAverageDeltaLabel(value: number | null): string {
-    if (value === null) {
-      return 'N/A from average';
-    }
-
-    if (value < 0) {
-      return `${this.formatSignedPercent(value)} less from average`;
-    }
-
-    if (value > 0) {
-      return `${this.formatSignedPercent(value)} more than average`;
-    }
-
-    return '0.0% from average';
   }
 
   private resolveCategoryName(categoryId: string, category: Category | undefined): string {
@@ -636,18 +587,15 @@ export class ExpenseCategoryDeltaWidgetComponent implements OnInit, OnDestroy {
         categoryName: 'Other',
         categoryIcon: this.defaultIcon,
         categoryColor: 'var(--ion-color-medium)',
+        progressBarColor: 'var(--ion-color-medium)',
         selectedPeriodAmount: 0,
         lastMonthAmount: 0,
         last12MonthsAvgAmount: 0,
         remainingFromAverage: 0,
         progressPercent: 0,
         progressBarValue: 0,
-        statusLabel: 'Safe',
-        progressClass: 'progress-safe',
         fromLastMonthDeltaPercent: null,
         fromAverageDeltaPercent: null,
-        fromLastMonthLabel: 'N/A from last month',
-        fromAverageLabel: 'N/A from average',
       },
     );
 

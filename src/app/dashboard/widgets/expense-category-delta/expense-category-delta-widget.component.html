@@ -3,7 +3,7 @@
     <div class="header-row">
       <div>
         <ion-card-title>Expense Category Delta</ion-card-title>
-        <ion-card-subtitle>Selected period vs last 12-month average</ion-card-subtitle>
+        <ion-card-subtitle>Selected period trend by category</ion-card-subtitle>
       </div>
 
       <ion-button
@@ -37,22 +37,30 @@
           <ion-icon [name]="getRowIcon(row)" [style.color]="row.categoryColor"></ion-icon>
           <div class="delta-row__title">
             <h3>{{ row.categoryName }}</h3>
-            <p>{{ row.last12MonthsAvgAmount | currency:selectedCurrency }} / last 12-month avg</p>
+            <div class="delta-inline">
+              <span class="delta-chip" [ngClass]="getDeltaToneClass(row.fromAverageDeltaPercent)">
+                {{ formatDeltaChip(row.fromAverageDeltaPercent) }}
+              </span>
+              <span class="delta-caption">vs average</span>
+            </div>
           </div>
-          <ion-text [color]="row.remainingFromAverage >= 0 ? 'success' : 'danger'" class="delta-row__status">
-            {{ row.statusLabel }}
-          </ion-text>
+          <div class="delta-row__amount-block">
+            <ion-text class="delta-row__actual">
+              {{ row.selectedPeriodAmount | currency:selectedCurrency }}
+            </ion-text>
+            <div class="delta-inline delta-inline--right">
+              <span class="delta-chip" [ngClass]="getDeltaToneClass(row.fromLastMonthDeltaPercent)">
+                {{ formatDeltaChip(row.fromLastMonthDeltaPercent) }}
+              </span>
+              <span class="delta-caption">vs last month</span>
+            </div>
+          </div>
         </div>
 
-        <ion-progress-bar [value]="row.progressBarValue" [ngClass]="row.progressClass"></ion-progress-bar>
-
-        <div class="delta-row__stats">
-          <span>Actual: {{ row.selectedPeriodAmount | currency:selectedCurrency }}</span>
-          <span>Remaining: {{ row.remainingFromAverage | currency:selectedCurrency }}</span>
-          <span>{{ row.progressPercent | number:'1.0-0' }}%</span>
-          <span>{{ row.fromLastMonthLabel }}</span>
-          <span>{{ row.fromAverageLabel }}</span>
-        </div>
+        <ion-progress-bar
+          [value]="row.progressBarValue"
+          [style.--progress-background]="row.progressBarColor"
+        ></ion-progress-bar>
       </div>
     </div>
   </ion-card-content>
