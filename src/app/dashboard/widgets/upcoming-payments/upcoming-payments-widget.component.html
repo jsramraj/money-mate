@@ -6,7 +6,7 @@
     <div style="font-size:0.9rem; color:var(--ion-color-medium);">
       Showing {{ items.length }} / {{ totalCount || 0 }}
     </div>
-    <div style="font-weight:600">Total: {{ totalAmount | currency }}</div>
+    <div style="font-weight:600">Total: {{ totalAmount | currency:selectedCurrency:'symbol':'1.0-2' }}</div>
   </div>
 
   <ion-card-content>
@@ -16,8 +16,15 @@
 
     <ion-list *ngIf="!loading && items.length > 0">
       <ion-item *ngFor="let item of items">
-        <div slot="start" style="min-width:80px; text-align:left; color:var(--ion-color-medium); font-size:0.9rem;">
-          {{ item.scheduledDate | date:'MMM d' }}
+        <div slot="start" style="min-width:76px; display:flex; justify-content:flex-start;">
+          <div style="width:64px; border:1px solid var(--ion-color-step-200); border-radius:12px; padding:6px 8px; text-align:center; background:var(--ion-color-light); line-height:1.1;">
+            <div style="font-weight:700; font-size:1rem; color:var(--ion-text-color);">
+              {{ item.scheduledDate | date:'d' }}
+            </div>
+            <div style="margin-top:2px; font-size:0.72rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ion-color-medium);">
+              {{ item.scheduledDate | date:'MMM' }}
+            </div>
+          </div>
         </div>
 
         <ion-label class="ion-text-wrap">
@@ -25,7 +32,7 @@
         </ion-label>
 
         <div slot="end" style="min-width:110px; text-align:right;">
-          <div style="font-weight:600">{{ item.amount | currency }}</div>
+          <div style="font-weight:600">{{ item.amount | currency:selectedCurrency:'symbol':'1.0-2' }}</div>
         </div>
       </ion-item>
     </ion-list>

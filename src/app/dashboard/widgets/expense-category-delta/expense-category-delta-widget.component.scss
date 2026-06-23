@@ -142,14 +142,6 @@
     height: 8px;
     border-radius: 999px;
   }
-
-  ion-progress-bar.progress-under {
-    --progress-background: var(--ion-color-success);
-  }
-
-  ion-progress-bar.progress-over {
-    --progress-background: var(--ion-color-danger);
-  }
 }
 
 @media (max-width: 480px) {

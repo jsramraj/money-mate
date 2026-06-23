@@ -75,8 +75,9 @@ ion-badge {
   margin-right: 6px;
   padding: 10px 8px;
   border-radius: 14px;
-  background: var(--ion-color-step-150);
-  border: 1px solid var(--ion-color-step-250);
+  background: linear-gradient(180deg, var(--ion-color-step-100) 0%, var(--ion-color-step-150) 100%);
+  border: 1px solid var(--ion-color-step-350);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   text-align: center;
 }
 
@@ -86,7 +87,7 @@ ion-badge {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ion-color-medium);
-  margin-bottom: 4px;
+  margin-top: 4px;
 }
 
 .recurring-date-day {

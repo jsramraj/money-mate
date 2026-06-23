@@ -34,6 +34,7 @@ interface UpcomingItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UpcomingPaymentsWidgetComponent implements OnDestroy {
+  private readonly CURRENCY_KEY = 'money-mate-currency';
   private readonly db = inject(DatabaseService);
   private readonly recurringStartup = inject(RecurringStartupService);
   private readonly transactionRepository = inject(TransactionRepository);
@@ -45,10 +46,12 @@ export class UpcomingPaymentsWidgetComponent implements OnDestroy {
   items: UpcomingItem[] = [];
   totalCount = 0;
   totalAmount = 0;
+  selectedCurrency = 'USD';
 
   private sub?: Subscription;
 
   constructor() {
+    this.loadSelectedCurrency();
     this.sub = this.dateRangeService.getDateRange$().subscribe((range) => {
       void this.loadForRange(range.startDate, range.endDate);
     });
@@ -61,8 +64,13 @@ export class UpcomingPaymentsWidgetComponent implements OnDestroy {
     this.sub?.unsubscribe();
   }
 
+  private loadSelectedCurrency(): void {
+    this.selectedCurrency = localStorage.getItem(this.CURRENCY_KEY) || 'USD';
+  }
+
   private async loadForRange(start: Date, end: Date): Promise<void> {
     this.loading = true;
+    this.loadSelectedCurrency();
     try {
       const recurringPayments = await this.db.recurringPayments.toArray();
 
