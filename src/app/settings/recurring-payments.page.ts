@@ -92,6 +92,22 @@ export class RecurringPaymentsPage implements OnInit {
       .sort((a, b) => this.getNextPaymentDate(a).getTime() - this.getNextPaymentDate(b).getTime());
   }
 
+  get totalExpenses(): number {
+    return this.activeRecurringPayments
+      .filter((item) => item.type === 'expense')
+      .reduce((sum, item) => sum + item.amount, 0);
+  }
+
+  get totalIncome(): number {
+    return this.activeRecurringPayments
+      .filter((item) => item.type === 'income')
+      .reduce((sum, item) => sum + Math.abs(item.amount), 0);
+  }
+
+  get hasIncome(): boolean {
+    return this.activeRecurringPayments.some((item) => item.type === 'income');
+  }
+
   trackByRecurringPaymentId(_: number, recurringPayment: RecurringPayment): string {
     return recurringPayment.id;
   }

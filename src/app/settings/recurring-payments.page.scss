@@ -189,3 +189,71 @@ ion-badge.cadence-chip.recurring-chip {
   margin-top: 2px;
 }
 
+.summary-section {
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--ion-item-background);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  gap: 16px;
+}
+
+.summary-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ion-color-medium);
+  margin-bottom: 6px;
+}
+
+.summary-amount {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.summary-amount.outgoing {
+  color: var(--ion-color-danger);
+}
+
+.summary-amount.incoming {
+  color: var(--ion-color-success);
+}
+
+.summary-divider {
+  width: 1px;
+  height: 50px;
+  background: var(--ion-color-step-200);
+}
+
+@media (max-width: 500px) {
+  .summary-card {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .summary-divider {
+    width: 100%;
+    height: 1px;
+  }
+
+  .summary-amount {
+    font-size: 1.2rem;
+  }
+}
+

@@ -9,6 +9,25 @@
 
 <ion-content [fullscreen]="true">
   <div class="container">
+    <!-- Summary Section -->
+    <div class="summary-section" *ngIf="!loading && !error && activeRecurringPayments.length > 0">
+      <div class="summary-card">
+        <div class="summary-item">
+          <span class="summary-label">Total Outgoing</span>
+          <span class="summary-amount outgoing">
+            {{ totalExpenses | currency:selectedCurrency:'symbol':'1.0-2' }}
+          </span>
+        </div>
+        <div class="summary-divider" *ngIf="hasIncome"></div>
+        <div class="summary-item" *ngIf="hasIncome">
+          <span class="summary-label">Total Incoming</span>
+          <span class="summary-amount incoming">
+            {{ totalIncome | currency:selectedCurrency:'symbol':'1.0-2' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="loading-state" *ngIf="loading">
       <ion-spinner name="crescent"></ion-spinner>
       <p>Loading recurring payments...</p>
