@@ -34,6 +34,7 @@ import {
 import { AlertController, ToastController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { chevronDownOutline, chevronUpOutline, closeCircle, trashOutline, saveOutline } from 'ionicons/icons';
+import { TransactionPrefillService } from '../core/services/transaction-prefill.service';
 import { Account, Category, GUEST_USER_NAME, RecurrenceSelection, RecurringPayment, Transaction, TransactionType } from '../core/database/models';
 import { AccountRepository, CategoryRepository, TransactionRepository, CreateTransactionInput, UpdateTransactionInput } from '../core/database/repositories';
 import { AnalyticsService } from '../core/services';
@@ -96,6 +97,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
   filteredSuggestions: string[] = [];
   tagSuggestions: string[] = [];
   recurringPaymentDetails: RecurringPayment | null = null;
+  private prefillRecurringPaymentId?: string;
 
   get isEditMode(): boolean {
     return !!this.transactionToEdit;
@@ -112,6 +114,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     description: string;
     notes: string;
     tags: string[];
+    recurringPaymentId?: string;
   } = {
     type: 'expense',
     recurrenceSelection: 'never',
@@ -122,7 +125,8 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     date: this.todayString(),
     description: '',
     notes: '',
-    tags: []
+    tags: [],
+    recurringPaymentId: undefined,
   };
 
   constructor(
@@ -138,6 +142,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     private toastController: ToastController,
     private modalController: ModalController,
     private db: DatabaseService,
+    private prefillService: TransactionPrefillService,
   ) {
     addIcons({ closeCircle, chevronDownOutline, chevronUpOutline, trashOutline, saveOutline });
   }
@@ -161,36 +166,71 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     // Build description->category mapping from past year transactions
     await this.autoCategorizationService.initialize();
 
-    // Check for transaction id in route params
+    // Check for transaction id in route params (edit mode)
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      // Try to load the transaction for editing
       const tx = await this.transactionRepository.getTransactionById(id);
       if (tx) {
         this.transactionToEdit = tx;
         await this.populateFormFromTransaction(tx);
         return;
       }
-    } else {
-      // Set up listener for description input changes (auto-categorization)
-      // only for new transactions, not when editing existing one
-      this.setupDescriptionAutoCategorization();
     }
 
-    // Fetch unique descriptions from the last 6 months
+    // Not editing an existing tx: check for prefill data (from recurring payment)
+    const prefillData = this.prefillService.getAndClearPrefillData();
+    if (prefillData) {
+      if (prefillData.type) this.form.type = prefillData.type;
+      if (prefillData.amount !== undefined)
+        this.form.amount = prefillData.amount;
+      if (prefillData.accountId) this.form.accountId = prefillData.accountId;
+      if (prefillData.transferToAccountId)
+        this.form.transferToAccountId = prefillData.transferToAccountId;
+      if (prefillData.categoryId) this.form.categoryId = prefillData.categoryId;
+      if (prefillData.description)
+        this.form.description = prefillData.description;
+      if (prefillData.notes) this.form.notes = prefillData.notes;
+      if (prefillData.tags) this.form.tags = [...prefillData.tags];
+      if (prefillData.date)
+        this.form.date = this.formatDateString(prefillData.date);
+
+      if (prefillData.recurringPaymentId) {
+        this.form.recurringPaymentId = prefillData.recurringPaymentId;
+        this.prefillRecurringPaymentId = prefillData.recurringPaymentId;
+        try {
+          this.recurringPaymentDetails =
+            (await this.db.recurringPayments.get(
+              prefillData.recurringPaymentId
+            )) ?? null;
+          this.form.recurrenceSelection =
+            this.recurringPaymentDetails?.frequency === 'month'
+              ? 'monthly'
+              : this.recurringPaymentDetails?.frequency === 'once'
+              ? 'returnable'
+              : 'never';
+        } catch (e) {
+          this.recurringPaymentDetails = null;
+        }
+      }
+    }
+
+    // Set up auto-categorization listener for new transactions
+    this.setupDescriptionAutoCategorization();
+
+    // Fetch suggestions
     this.descriptionSuggestions = await this.transactionRepository.getUniqueDescriptions(6);
     this.tagSuggestions = await this.transactionRepository.getUniqueTags(12);
 
+    // Choose default account: prefer prefilled account, then last-used, then first account
     const lastUsedAccountId = this.getLastUsedAccountId();
     const hasLastUsedAccount = !!lastUsedAccountId && this.accounts.some((account) => account.id === lastUsedAccountId);
 
-    if (hasLastUsedAccount) {
-      this.form.accountId = lastUsedAccountId as string;
-      return;
-    }
-
-    if (this.accounts.length > 0) {
-      this.form.accountId = this.accounts[0].id;
+    if (!this.form.accountId) {
+      if (hasLastUsedAccount) {
+        this.form.accountId = lastUsedAccountId as string;
+      } else if (this.accounts.length > 0) {
+        this.form.accountId = this.accounts[0].id;
+      }
     }
   }
 
@@ -303,6 +343,14 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     return `${yyyy}-${mm}-${dd}`;
   }
 
+  private formatDateString(date: Date | string): string {
+    const d = new Date(date);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   onTypeChange(): void {
     // Clear transfer-specific field when switching away
     if (this.form.type !== 'transfer') {
@@ -344,7 +392,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     this.categoryManuallySelected = false;
     try {
       const mode = this.isEditMode ? 'update' : 'create';
-      let recurringPaymentId = this.transactionToEdit?.recurringPaymentId;
+      let recurringPaymentId = this.transactionToEdit?.recurringPaymentId || this.prefillRecurringPaymentId;
 
       if (!this.isEditMode && this.form.recurrenceSelection !== 'never' && !recurringPaymentId) {
         recurringPaymentId = await this.createRecurringPayment();

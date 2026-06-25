@@ -5,6 +5,9 @@
     </ion-buttons>
     <ion-title>Recurring Payment</ion-title>
     <ion-buttons slot="end">
+      <ion-button (click)="createTransaction()" [disabled]="saving || !recurringPayment">
+        <ion-icon name="wallet-outline"></ion-icon>
+      </ion-button>
       <ion-button [disabled]="!canSave" (click)="save()">
         <ion-icon name="save-outline"></ion-icon>
       </ion-button>

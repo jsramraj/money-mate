@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   IonBackButton,
@@ -25,10 +25,11 @@ import {
 } from '@ionic/angular/standalone';
 import { NavController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { calendarOutline, saveOutline } from 'ionicons/icons';
+import { calendarOutline, saveOutline, walletOutline } from 'ionicons/icons';
 import { RecurringPayment, Transaction } from '../core/database/models';
 import { DatabaseService } from '../core/database/database.service';
 import { AccountRepository, CategoryRepository, TransactionRepository } from '../core/database/repositories';
+import { TransactionPrefillService } from '../core/services/transaction-prefill.service';
 
 interface ExecutionHistoryRow {
   id: string;
@@ -82,6 +83,7 @@ export class RecurringPaymentDetailPage {
 
   constructor(
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly db: DatabaseService,
     private readonly accountRepository: AccountRepository,
     private readonly categoryRepository: CategoryRepository,
@@ -89,8 +91,9 @@ export class RecurringPaymentDetailPage {
     private readonly navController: NavController,
     private readonly toastController: ToastController,
     private readonly cdr: ChangeDetectorRef,
+    private readonly prefillService: TransactionPrefillService,
   ) {
-    addIcons({ calendarOutline, saveOutline });
+    addIcons({ calendarOutline, saveOutline, walletOutline });
   }
 
   ngOnInit(): void {
@@ -166,6 +169,27 @@ export class RecurringPaymentDetailPage {
     if (typeof value === 'string' && value) {
       this.dateValue = value.slice(0, 10);
     }
+  }
+
+  async createTransaction(): Promise<void> {
+    if (!this.recurringPayment) return;
+
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const prefillData: Partial<Transaction> = {
+      type: this.recurringPayment.type,
+      amount: this.recurringPayment.amount,
+      accountId: this.recurringPayment.accountId,
+      transferToAccountId: this.recurringPayment.transferToAccountId,
+      categoryId: this.recurringPayment.categoryId,
+      description: this.recurringPayment.description,
+      notes: this.recurringPayment.notes,
+      tags: this.recurringPayment.tags,
+      date: new Date(today),
+      recurringPaymentId: this.recurringPayment.id,
+    };
+
+    this.prefillService.setTransactionPrefillData(prefillData);
+    await this.router.navigate(['/tabs/transactions/form']);
   }
 
   trackByExecutionRowId(_index: number, row: ExecutionHistoryRow): string {
