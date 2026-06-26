@@ -95,7 +95,7 @@ export class RecurringPaymentsPage implements OnInit {
   get totalExpenses(): number {
     return this.activeRecurringPayments
       .filter((item) => item.type === 'expense')
-      .reduce((sum, item) => sum + item.amount, 0);
+      .reduce((sum, item) => sum + Math.abs(item.amount), 0);
   }
 
   get totalIncome(): number {
