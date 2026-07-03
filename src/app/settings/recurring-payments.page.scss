@@ -2,6 +2,10 @@
   padding: 12px;
 }
 
+.tab-switcher {
+  margin: 0 0 16px;
+}
+
 ion-list {
   background: transparent;
 }
@@ -10,13 +14,25 @@ ion-list {
   margin-top: 6px;
 }
 
+.month-group + .month-group {
+  margin-top: 18px;
+}
+
 .group-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 6px 4px 10px;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ion-color-medium);
+}
+
+.group-heading span {
+  display: inline-flex;
+  align-items: center;
 }
 
 .loading-state,
@@ -34,6 +50,10 @@ ion-list {
 .empty-state ion-icon {
   font-size: 2rem;
   margin-bottom: 8px;
+}
+
+.empty-state-inline {
+  padding-top: 24px;
 }
 
 ion-item {

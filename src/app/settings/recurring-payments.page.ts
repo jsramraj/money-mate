@@ -11,6 +11,8 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonSegment,
+  IonSegmentButton,
   IonSpinner,
   IonTitle,
   IonToolbar,
@@ -24,6 +26,13 @@ import { RecurringPayment } from '../core/database/models';
 import { DatabaseService } from '../core/database/database.service';
 import { AccountRepository, CategoryRepository } from '../core/database/repositories';
 
+interface RecurringPaymentMonthGroup {
+  key: string;
+  label: string;
+  sortTime: number;
+  payments: RecurringPayment[];
+}
+
 @Component({
   selector: 'app-recurring-payments',
   standalone: true,
@@ -35,11 +44,14 @@ import { AccountRepository, CategoryRepository } from '../core/database/reposito
     IonToolbar,
     IonTitle,
     IonButtons,
-      IonBackButton,
-      IonContent,
-      IonList,
-      IonItem,
-      IonBadge,
+    IonBackButton,
+    IonContent,
+    IonList,
+    IonItem,
+    IonBadge,
+    IonSegment,
+    IonSegmentButton,
+    IonLabel,
     IonIcon,
     IonSpinner,
   ],
@@ -48,9 +60,13 @@ import { AccountRepository, CategoryRepository } from '../core/database/reposito
 export class RecurringPaymentsPage implements OnInit {
   private readonly CURRENCY_KEY = 'money-mate-currency';
   recurringPayments: RecurringPayment[] = [];
+  activeRecurringPayments: RecurringPayment[] = [];
+  activeRecurringPaymentGroups: RecurringPaymentMonthGroup[] = [];
+  pausedRecurringPayments: RecurringPayment[] = [];
   loading = true;
   error: string | null = null;
   selectedCurrency = 'USD';
+  selectedTab: 'active' | 'paused' = 'active';
   private accountNames = new Map<string, string>();
   private categoryNames = new Map<string, string>();
 
@@ -80,18 +96,6 @@ export class RecurringPaymentsPage implements OnInit {
     return this.recurringPayments.filter((item) => !item.isDeleted && item.status !== 'cancelled');
   }
 
-  get activeRecurringPayments(): RecurringPayment[] {
-    return this.visibleRecurringPayments
-      .filter((item) => item.status !== 'paused')
-      .sort((a, b) => this.getNextPaymentDate(a).getTime() - this.getNextPaymentDate(b).getTime());
-  }
-
-  get pausedRecurringPayments(): RecurringPayment[] {
-    return this.visibleRecurringPayments
-      .filter((item) => item.status === 'paused')
-      .sort((a, b) => this.getNextPaymentDate(a).getTime() - this.getNextPaymentDate(b).getTime());
-  }
-
   get totalExpenses(): number {
     return this.activeRecurringPayments
       .filter((item) => item.type === 'expense')
@@ -108,8 +112,20 @@ export class RecurringPaymentsPage implements OnInit {
     return this.activeRecurringPayments.some((item) => item.type === 'income');
   }
 
+  onTabChange(event: CustomEvent): void {
+    const value = event.detail?.value;
+
+    if (value === 'active' || value === 'paused') {
+      this.selectedTab = value;
+    }
+  }
+
   trackByRecurringPaymentId(_: number, recurringPayment: RecurringPayment): string {
     return recurringPayment.id;
+  }
+
+  trackByRecurringPaymentGroup(_: number, group: RecurringPaymentMonthGroup): string {
+    return group.key;
   }
 
   getDisplayAmount(amount: number): number {
@@ -241,6 +257,15 @@ export class RecurringPaymentsPage implements OnInit {
       this.accountNames = new Map(accounts.map((account) => [account.id, account.name]));
       this.categoryNames = new Map(categories.map((category) => [category.id, category.name]));
       this.recurringPayments = recurringPayments;
+
+      const visibleRecurringPayments = this.visibleRecurringPayments;
+      this.activeRecurringPayments = visibleRecurringPayments
+        .filter((item) => item.status !== 'paused')
+        .sort((a, b) => this.getNextPaymentDate(a).getTime() - this.getNextPaymentDate(b).getTime());
+      this.pausedRecurringPayments = visibleRecurringPayments
+        .filter((item) => item.status === 'paused')
+        .sort((a, b) => this.getNextPaymentDate(a).getTime() - this.getNextPaymentDate(b).getTime());
+      this.activeRecurringPaymentGroups = this.buildRecurringPaymentGroups(this.activeRecurringPayments);
     } catch (error) {
       console.error('Failed to load recurring payments:', error);
       this.error = 'Failed to load recurring payments';
@@ -252,5 +277,41 @@ export class RecurringPaymentsPage implements OnInit {
 
   private loadSelectedCurrency(): void {
     this.selectedCurrency = localStorage.getItem(this.CURRENCY_KEY) || 'USD';
+  }
+
+  private buildRecurringPaymentGroups(recurringPayments: RecurringPayment[]): RecurringPaymentMonthGroup[] {
+    const groups = new Map<string, RecurringPaymentMonthGroup>();
+    const currentMonthKey = this.getMonthKey(new Date());
+
+    recurringPayments.forEach((recurringPayment) => {
+      const nextPaymentDate = this.getNextPaymentDate(recurringPayment);
+      const monthKey = this.getMonthKey(nextPaymentDate);
+      const existingGroup = groups.get(monthKey);
+
+      if (existingGroup) {
+        existingGroup.payments.push(recurringPayment);
+        return;
+      }
+
+      groups.set(monthKey, {
+        key: monthKey,
+        label: monthKey === currentMonthKey ? 'This month' : this.getMonthLabel(nextPaymentDate),
+        sortTime: new Date(nextPaymentDate.getFullYear(), nextPaymentDate.getMonth(), 1).getTime(),
+        payments: [recurringPayment],
+      });
+    });
+
+    return Array.from(groups.values()).sort((left, right) => left.sortTime - right.sortTime);
+  }
+
+  private getMonthKey(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private getMonthLabel(date: Date): string {
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'long',
+      year: 'numeric',
+    }).format(date);
   }
 }
