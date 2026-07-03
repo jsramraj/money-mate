@@ -124,8 +124,16 @@ export class RecurringPaymentsPage implements OnInit {
     return this.activeRecurringPayments.some((item) => item.type === 'income');
   }
 
+  get hasExpenses(): boolean {
+    return this.activeRecurringPayments.some((item) => item.type === 'expense');
+  }
+
   get hasCurrentMonthIncome(): boolean {
     return this.getCurrentMonthRecurringPayments().some((item) => item.type === 'income');
+  }
+
+  get hasCurrentMonthExpenses(): boolean {
+    return this.getCurrentMonthRecurringPayments().some((item) => item.type === 'expense');
   }
 
   onTabChange(event: CustomEvent): void {

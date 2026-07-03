@@ -223,6 +223,10 @@ ion-badge.cadence-chip.recurring-chip {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+.summary-card.single-column {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .summary-item {
   min-width: 0;
   display: flex;

@@ -10,9 +10,9 @@
 <ion-content [fullscreen]="true">
   <div class="container">
     <!-- Summary Section -->
-    <div class="summary-section" *ngIf="!loading && !error && activeRecurringPayments.length > 0">
-      <div class="summary-card">
-        <div class="summary-item">
+    <div class="summary-section" *ngIf="!loading && !error && activeRecurringPayments.length > 0 && (hasExpenses || hasIncome)">
+      <div class="summary-card" [class.single-column]="!(hasExpenses && hasIncome)">
+        <div class="summary-item" *ngIf="hasExpenses">
           <span class="summary-label">Outgoing</span>
           <span class="summary-amount outgoing">
             {{ currentMonthExpenses | currency:selectedCurrency:'symbol':'1.0-2' }}
@@ -21,8 +21,8 @@
             Overall: {{ totalExpenses | currency:selectedCurrency:'symbol':'1.0-2' }}
           </span>
         </div>
-        <div class="summary-divider" *ngIf="hasCurrentMonthIncome || hasIncome"></div>
-        <div class="summary-item" *ngIf="hasCurrentMonthIncome || hasIncome">
+        <div class="summary-divider" *ngIf="hasExpenses && hasIncome"></div>
+        <div class="summary-item" *ngIf="hasIncome">
           <span class="summary-label">Incoming</span>
           <span class="summary-amount incoming">
             {{ currentMonthIncome | currency:selectedCurrency:'symbol':'1.0-2' }}
