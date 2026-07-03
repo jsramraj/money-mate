@@ -24,7 +24,7 @@ import {
 } from 'ionicons/icons';
 import { RecurringPayment } from '../core/database/models';
 import { DatabaseService } from '../core/database/database.service';
-import { AccountRepository, CategoryRepository } from '../core/database/repositories';
+import { AccountRepository, CategoryRepository, TransactionRepository } from '../core/database/repositories';
 
 interface RecurringPaymentMonthGroup {
   key: string;
@@ -69,11 +69,13 @@ export class RecurringPaymentsPage implements OnInit {
   selectedTab: 'active' | 'paused' = 'active';
   private accountNames = new Map<string, string>();
   private categoryNames = new Map<string, string>();
+  private completedRecurringPaymentIdsInCurrentMonth = new Set<string>();
 
   constructor(
     private readonly db: DatabaseService,
     private readonly accountRepository: AccountRepository,
     private readonly categoryRepository: CategoryRepository,
+    private readonly transactionRepository: TransactionRepository,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
   ) {
@@ -181,7 +183,11 @@ export class RecurringPaymentsPage implements OnInit {
       case 'once':
         return this.getOnceDate(anchorDate);
       default:
-        return this.getNextMonthlyDate(anchorDate, referenceDate);
+        return this.getNextMonthlyDate(
+          anchorDate,
+          referenceDate,
+          this.completedRecurringPaymentIdsInCurrentMonth.has(recurringPayment.id),
+        );
     }
   }
 
@@ -189,8 +195,13 @@ export class RecurringPaymentsPage implements OnInit {
     return new Date(anchorDate);
   }
 
-  private getNextMonthlyDate(anchorDate: Date, referenceDate: Date): Date {
+  private getNextMonthlyDate(anchorDate: Date, referenceDate: Date, forceNextMonth = false): Date {
     const thisMonthScheduled = this.getMonthlyScheduledDate(anchorDate, referenceDate);
+
+    if (forceNextMonth) {
+      return this.getMonthlyScheduledDate(anchorDate, new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 1));
+    }
+
     return thisMonthScheduled.getTime() >= referenceDate.getTime()
       ? thisMonthScheduled
       : this.getMonthlyScheduledDate(anchorDate, new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 1));
@@ -283,6 +294,20 @@ export class RecurringPaymentsPage implements OnInit {
       this.recurringPayments = recurringPayments;
 
       const visibleRecurringPayments = this.visibleRecurringPayments;
+      const recurringPaymentIds = visibleRecurringPayments.map((item) => item.id);
+      const currentMonthRange = this.getMonthDateRange();
+      const currentMonthTransactions = await this.transactionRepository.getTransactionsByRecurringPaymentIdsInDateRange(
+        recurringPaymentIds,
+        currentMonthRange.start,
+        currentMonthRange.end,
+      );
+
+      this.completedRecurringPaymentIdsInCurrentMonth = new Set(
+        currentMonthTransactions
+          .map((item) => item.recurringPaymentId)
+          .filter((id): id is string => !!id),
+      );
+
       this.activeRecurringPayments = visibleRecurringPayments
         .filter((item) => item.status !== 'paused')
         .sort((a, b) => this.getNextPaymentDate(a).getTime() - this.getNextPaymentDate(b).getTime());
@@ -337,6 +362,12 @@ export class RecurringPaymentsPage implements OnInit {
       month: 'long',
       year: 'numeric',
     }).format(date);
+  }
+
+  private getMonthDateRange(referenceDate = new Date()): { start: Date; end: Date } {
+    const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
+    const end = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0, 23, 59, 59, 999);
+    return { start, end };
   }
 
   private getCurrentMonthRecurringPayments(referenceDate = new Date()): RecurringPayment[] {
