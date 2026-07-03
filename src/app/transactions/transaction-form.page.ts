@@ -487,6 +487,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     const recurringPaymentId = crypto.randomUUID();
     const amountValue = Number(this.form.amount ?? 0);
     const storedAmount = Math.abs(amountValue);
+    const recurringAnchorDate = this.getRecurringAnchorDate();
 
     const recurringPayment: RecurringPayment = {
       id: recurringPaymentId,
@@ -495,7 +496,7 @@ export class TransactionFormPage implements OnInit, OnDestroy {
       type: this.getRecurringPaymentType(),
       categoryId: this.form.type === 'transfer' ? '' : (this.form.categoryId || ''),
       description: this.capitalizeDescription(this.form.description.trim()),
-      date: new Date(this.form.date),
+      date: recurringAnchorDate,
       notes: this.form.notes.trim() || undefined,
       tags: this.form.tags.length > 0 ? this.form.tags : undefined,
       transferToAccountId: this.form.type === 'transfer' ? this.form.transferToAccountId : undefined,
@@ -510,6 +511,24 @@ export class TransactionFormPage implements OnInit, OnDestroy {
 
     await this.db.recurringPayments.add(recurringPayment);
     return recurringPaymentId;
+  }
+
+  private getRecurringAnchorDate(): Date {
+    const sourceDate = new Date(this.form.date);
+    const targetYear = sourceDate.getFullYear();
+    const targetMonth = sourceDate.getMonth() + 1;
+    const maxDayInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const day = Math.min(sourceDate.getDate(), maxDayInTargetMonth);
+
+    return new Date(
+      targetYear,
+      targetMonth,
+      day,
+      sourceDate.getHours(),
+      sourceDate.getMinutes(),
+      sourceDate.getSeconds(),
+      sourceDate.getMilliseconds(),
+    );
   }
 
   private getRecurringPaymentFrequency(): RecurringPayment['frequency'] {
