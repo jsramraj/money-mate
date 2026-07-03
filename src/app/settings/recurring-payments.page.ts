@@ -102,14 +102,30 @@ export class RecurringPaymentsPage implements OnInit {
       .reduce((sum, item) => sum + Math.abs(item.amount), 0);
   }
 
+  get currentMonthExpenses(): number {
+    return this.getCurrentMonthRecurringPayments()
+      .filter((item) => item.type === 'expense')
+      .reduce((sum, item) => sum + Math.abs(item.amount), 0);
+  }
+
   get totalIncome(): number {
     return this.activeRecurringPayments
       .filter((item) => item.type === 'income')
       .reduce((sum, item) => sum + Math.abs(item.amount), 0);
   }
 
+  get currentMonthIncome(): number {
+    return this.getCurrentMonthRecurringPayments()
+      .filter((item) => item.type === 'income')
+      .reduce((sum, item) => sum + Math.abs(item.amount), 0);
+  }
+
   get hasIncome(): boolean {
     return this.activeRecurringPayments.some((item) => item.type === 'income');
+  }
+
+  get hasCurrentMonthIncome(): boolean {
+    return this.getCurrentMonthRecurringPayments().some((item) => item.type === 'income');
   }
 
   onTabChange(event: CustomEvent): void {
@@ -232,7 +248,7 @@ export class RecurringPaymentsPage implements OnInit {
       return 'Transfer';
     }
 
-    return this.categoryNames.get(recurringPayment.categoryId) ?? 'Uncategorized';
+    return this.categoryNames.get(recurringPayment.categoryId) ?? '';
   }
 
   getAccountName(accountId: string): string {
@@ -313,5 +329,15 @@ export class RecurringPaymentsPage implements OnInit {
       month: 'long',
       year: 'numeric',
     }).format(date);
+  }
+
+  private getCurrentMonthRecurringPayments(referenceDate = new Date()): RecurringPayment[] {
+    const month = referenceDate.getMonth();
+    const year = referenceDate.getFullYear();
+
+    return this.activeRecurringPayments.filter((item) => {
+      const nextPaymentDate = this.getNextPaymentDate(item);
+      return nextPaymentDate.getMonth() === month && nextPaymentDate.getFullYear() === year;
+    });
   }
 }

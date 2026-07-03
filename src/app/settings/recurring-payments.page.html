@@ -13,16 +13,22 @@
     <div class="summary-section" *ngIf="!loading && !error && activeRecurringPayments.length > 0">
       <div class="summary-card">
         <div class="summary-item">
-          <span class="summary-label">Total Outgoing</span>
+          <span class="summary-label">Outgoing</span>
           <span class="summary-amount outgoing">
-            {{ totalExpenses | currency:selectedCurrency:'symbol':'1.0-2' }}
+            {{ currentMonthExpenses | currency:selectedCurrency:'symbol':'1.0-2' }}
+          </span>
+          <span class="summary-overall">
+            Overall: {{ totalExpenses | currency:selectedCurrency:'symbol':'1.0-2' }}
           </span>
         </div>
-        <div class="summary-divider" *ngIf="hasIncome"></div>
-        <div class="summary-item" *ngIf="hasIncome">
-          <span class="summary-label">Total Incoming</span>
+        <div class="summary-divider" *ngIf="hasCurrentMonthIncome || hasIncome"></div>
+        <div class="summary-item" *ngIf="hasCurrentMonthIncome || hasIncome">
+          <span class="summary-label">Incoming</span>
           <span class="summary-amount incoming">
-            {{ totalIncome | currency:selectedCurrency:'symbol':'1.0-2' }}
+            {{ currentMonthIncome | currency:selectedCurrency:'symbol':'1.0-2' }}
+          </span>
+          <span class="summary-overall">
+            Overall: {{ totalIncome | currency:selectedCurrency:'symbol':'1.0-2' }}
           </span>
         </div>
       </div>
@@ -78,12 +84,9 @@
               <div class="recurring-details">
                 <h2>{{ recurringPayment.description || 'Untitled recurring payment' }}</h2>
                 <p class="meta-line">
-                  {{ getAccountName(recurringPayment.accountId) }} •
-                  <ng-container *ngIf="recurringPayment.frequency === 'once'">
-                    {{ recurringPayment.type === 'income' ? 'Incoming' : (recurringPayment.type === 'expense' ? 'Outgoing' : 'Transfer') }}
-                  </ng-container>
-                  <ng-container *ngIf="recurringPayment.frequency !== 'once'">
-                    {{ getCategoryName(recurringPayment) }}
+                  {{ getAccountName(recurringPayment.accountId) }}
+                  <ng-container *ngIf="getCategoryName(recurringPayment)">
+                    •{{ getCategoryName(recurringPayment) }}
                   </ng-container>
                 </p>
               </div>

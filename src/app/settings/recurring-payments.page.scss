@@ -62,7 +62,7 @@ ion-item {
   --padding-bottom: 12px;
   --inner-padding-end: 12px;
   --border-radius: 16px;
-  --background: var(--ion-item-background);
+  --background: var(--ion-color-light);
   margin-bottom: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
@@ -219,7 +219,7 @@ ion-badge.cadence-chip.recurring-chip {
   align-items: stretch;
   padding: 16px;
   border-radius: 16px;
-  background: var(--ion-item-background);
+  background: var(--ion-color-light);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
@@ -245,6 +245,13 @@ ion-badge.cadence-chip.recurring-chip {
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--ion-text-color);
+}
+
+.summary-overall {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--ion-color-medium);
+  opacity: 0.9;
 }
 
 .summary-amount.outgoing {
