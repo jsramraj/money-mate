@@ -42,7 +42,13 @@ import {
   TransactionDisplayItem,
 } from '../core/services';
 import { Router, ActivatedRoute } from '@angular/router';
-import { TransactionFilterModalComponent, TransactionFilterState } from './components/transaction-filter-modal.component';
+import {
+  TransactionFilterModalComponent,
+  TransactionFilterState,
+  TransactionFilterModalResult,
+  TransactionSortDirection,
+  TransactionSortField,
+} from './components/transaction-filter-modal.component';
 import { DateRangeFilterComponent, DateRange } from '../shared/date-range-filter/date-range-filter.component';
 
 interface TransactionListItem extends TransactionDisplayItem {
@@ -95,8 +101,12 @@ export class TransactionsPage implements OnInit, OnDestroy {
   syncing = false;
   error: string | null = null;
   groupedItems: TransactionDateGroup[] = [];
+  flatItems: TransactionListItem[] = [];
   totalTransactions = 0;
   availableTags: string[] = [];
+  isDesktopView = false;
+  sortField: TransactionSortField = 'date';
+  sortDirection: TransactionSortDirection = 'desc';
   private allTransactions: Transaction[] = [];
   private accountsMap = new Map<string, Account>();
   private categoriesMap = new Map<string, Category>();
@@ -114,6 +124,10 @@ export class TransactionsPage implements OnInit, OnDestroy {
   @ViewChild('transactionSearchbar') private searchbar?: IonSearchbar;
   private _writingSearchParam = false;
   private _searchDebounce?: ReturnType<typeof setTimeout>;
+  private readonly desktopMediaQuery = typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)') : null;
+  private readonly onDesktopMediaChange = (event: MediaQueryListEvent): void => {
+    this.isDesktopView = event.matches;
+  };
 
   constructor(
     private transactionRepository: TransactionRepository,
@@ -142,6 +156,11 @@ export class TransactionsPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    if (this.desktopMediaQuery) {
+      this.isDesktopView = this.desktopMediaQuery.matches;
+      this.desktopMediaQuery.addEventListener('change', this.onDesktopMediaChange);
+    }
+
     this.loadSelectedCurrency();
 
     // Restore search state from the initial URL snapshot (no re-init triggered).
@@ -185,6 +204,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.transactionsSub?.unsubscribe();
     clearTimeout(this._searchDebounce);
+    this.desktopMediaQuery?.removeEventListener('change', this.onDesktopMediaChange);
   }
 
   async ionViewWillEnter(): Promise<void> {
@@ -269,7 +289,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
 
   onDateRangeChange(dateRange: DateRange): void {
     this.selectedDateRange = dateRange;
-    this.buildGroupedItems(this.applyFilters(this.allTransactions));
+    this.rebuildFilteredViews(this.allTransactions);
   }
 
   toggleSearch(): void {
@@ -281,7 +301,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
 
     if (!this.searchVisible && this.searchText) {
       this.searchText = '';
-      this.buildGroupedItems(this.applyFilters(this.allTransactions));
+      this.rebuildFilteredViews(this.allTransactions);
       this._writingSearchParam = true;
       void this.router.navigate([], {
         relativeTo: this.route,
@@ -300,7 +320,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
 
   onSearchChange(event: CustomEvent): void {
     this.searchText = (event.detail.value as string | undefined) ?? '';
-    this.buildGroupedItems(this.applyFilters(this.allTransactions));
+    this.rebuildFilteredViews(this.allTransactions);
 
     clearTimeout(this._searchDebounce);
     this._searchDebounce = setTimeout(() => {
@@ -318,8 +338,11 @@ export class TransactionsPage implements OnInit, OnDestroy {
     await this.router.navigate(['/tabs/transactions/form', item.id]);
   }
 
-  async confirmDelete(item: TransactionListItem, slidingItem: IonItemSliding): Promise<void> {
-    await slidingItem.close();
+  async confirmDelete(item: TransactionListItem, slidingItem?: IonItemSliding): Promise<void> {
+    if (slidingItem) {
+      await slidingItem.close();
+    }
+
     const alert = await this.alertController.create({
       header: 'Delete Transaction',
       message: 'Are you sure you want to delete this transaction?',
@@ -336,6 +359,11 @@ export class TransactionsPage implements OnInit, OnDestroy {
       ],
     });
     await alert.present();
+  }
+
+  async deleteFromDesktop(event: Event, item: TransactionListItem): Promise<void> {
+    event.stopPropagation();
+    await this.confirmDelete(item);
   }
 
   async deleteTransaction(item: TransactionListItem): Promise<void> {
@@ -363,13 +391,16 @@ export class TransactionsPage implements OnInit, OnDestroy {
       component: TransactionFilterModalComponent,
       componentProps: {
         initialFilters: this.filters,
+        showSortOptions: this.isDesktopView,
+        initialSortField: this.sortField,
+        initialSortDirection: this.sortDirection,
         accounts: this.accounts,
         availableTags: this.availableTags,
       },
     });
 
     await modal.present();
-    const { data, role } = await modal.onWillDismiss<TransactionFilterState>();
+    const { data, role } = await modal.onWillDismiss<TransactionFilterModalResult>();
 
     if (role !== 'apply' || !data) {
       return;
@@ -381,6 +412,9 @@ export class TransactionsPage implements OnInit, OnDestroy {
       accountIds: [...data.accountIds],
       tags: [...data.tags],
     };
+
+    this.sortField = data.sortField ?? 'date';
+    this.sortDirection = data.sortDirection ?? 'desc';
 
     // Update query params based on account filter (array style)
     if (this.filters.accountIds.length > 0) {
@@ -403,7 +437,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
       });
     }
 
-    this.buildGroupedItems(this.applyFilters(this.allTransactions));
+    this.rebuildFilteredViews(this.allTransactions);
     this.analyticsService.trackEvent('transactions_filters_applied', {
       active_filter_count: this.activeFilterCount,
     });
@@ -483,7 +517,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
           this.allTransactions = transactions;
           this.totalTransactions = transactions.length;
           this.updateAvailableTags(transactions);
-          this.buildGroupedItems(this.applyFilters(transactions));
+          this.rebuildFilteredViews(transactions);
           this.loading = false;
         },
         error: (error) => {
@@ -679,6 +713,49 @@ export class TransactionsPage implements OnInit, OnDestroy {
     this.groupedItems = Array.from(groupedMap.values()).sort(
       (a, b) => new Date(b.dateKey).getTime() - new Date(a.dateKey).getTime()
     );
+  }
+
+  private buildFlatItems(transactions: Transaction[]): void {
+    const displayItems: TransactionListItem[] = transactions.map((transaction) => {
+      const date = new Date(transaction.date);
+      const dateKey = this.getDateKey(date);
+
+      return {
+        ...buildTransactionDisplayItem(
+          transaction,
+          this.accountsMap,
+          this.categoriesMap,
+          this.registeredIconNames,
+        ),
+        dateKey,
+      };
+    });
+
+    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    this.flatItems = displayItems.sort((first, second) => {
+      if (this.sortField === 'amount') {
+        const amountDelta = Math.abs(first.transaction.amount) - Math.abs(second.transaction.amount);
+        if (amountDelta !== 0) {
+          return amountDelta * direction;
+        }
+      } else {
+        const firstDate = new Date(first.transaction.date).getTime();
+        const secondDate = new Date(second.transaction.date).getTime();
+        const dateDelta = firstDate - secondDate;
+        if (dateDelta !== 0) {
+          return dateDelta * direction;
+        }
+      }
+
+      const fallbackDateDelta = new Date(first.transaction.date).getTime() - new Date(second.transaction.date).getTime();
+      return fallbackDateDelta * -1;
+    });
+  }
+
+  private rebuildFilteredViews(transactions: Transaction[]): void {
+    const filteredTransactions = this.applyFilters(transactions);
+    this.buildGroupedItems(filteredTransactions);
+    this.buildFlatItems(filteredTransactions);
   }
 
   private async presentToast(message: string, color: 'success' | 'danger'): Promise<void> {
