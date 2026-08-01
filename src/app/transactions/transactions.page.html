@@ -9,7 +9,7 @@
         <ion-icon name="funnel-outline" slot="icon-only"></ion-icon>
         <ion-badge *ngIf="activeFilterCount > 0" color="primary" slot="end">{{ activeFilterCount }}</ion-badge>
       </ion-button>
-      <ion-button (click)="toggleSearch()" [attr.aria-label]="searchVisible ? 'Close search' : 'Search transactions'" [color]="searchVisible ? 'primary' : ''">
+      <ion-button class="mobile-search-toggle" (click)="toggleSearch()" [attr.aria-label]="searchVisible ? 'Close search' : 'Search transactions'" [color]="searchVisible ? 'primary' : ''">
         <ion-icon [name]="searchVisible ? 'close-outline' : 'search-outline'" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -27,6 +27,7 @@
     [availablePeriods]="['weekly', 'monthly', 'yearly', 'custom']"
     (dateRangeChange)="onDateRangeChange($event)">
   </app-date-range-filter>
+
     <ion-toolbar *ngIf="searchVisible" class="search-toolbar">
       <ion-searchbar
         #transactionSearchbar
@@ -64,7 +65,71 @@
     <p>{{ emptyStateMessage }}</p>
   </div>
 
-  <ion-list *ngIf="!loading && !error && hasTransactions">
+  <div class="desktop-table-wrapper" *ngIf="!loading && !error && hasTransactions && isDesktopView">
+    <div class="desktop-table" role="table" aria-label="Transactions table">
+      <div class="desktop-row desktop-header" role="row">
+        <div class="desktop-cell col-date" role="columnheader">Date</div>
+        <div class="desktop-cell col-description" role="columnheader">Description</div>
+        <div class="desktop-cell col-category" role="columnheader">Category</div>
+        <div class="desktop-cell col-account" role="columnheader">Account</div>
+        <div class="desktop-cell col-tags" role="columnheader">Tags</div>
+        <div class="desktop-cell col-amount" role="columnheader">Amount</div>
+        <div class="desktop-cell col-actions" role="columnheader">Actions</div>
+      </div>
+
+      <div
+        class="desktop-row"
+        role="row"
+        tabindex="0"
+        *ngFor="let item of flatItems; trackBy: trackByTransactionId"
+        [class.transfer-row]="item.transaction.type === 'transfer'"
+        (click)="openEditModal(item)"
+        (keydown.enter)="openEditModal(item)"
+      >
+        <div class="desktop-cell col-date" role="cell">{{ item.transaction.date | date:'dd MMM yyyy' }}</div>
+
+        <div class="desktop-cell col-description" role="cell">
+          <div class="desktop-primary">
+            <ion-icon [name]="item.iconName" [style.color]="item.iconColor"></ion-icon>
+            <span *ngIf="item.transaction.type !== 'transfer'">{{ capitalize(item.transaction.description) || item.categoryName }}</span>
+            <span *ngIf="item.transaction.type === 'transfer'">Transfer</span>
+            <span *ngIf="item.transaction.isDirty" class="dirty-dot" aria-label="Unsaved changes"></span>
+          </div>
+          <div class="desktop-secondary" *ngIf="item.transaction.type === 'transfer'">{{ getTransferSubtitle(item) }}</div>
+        </div>
+
+        <div class="desktop-cell col-category" role="cell">
+          {{ item.categoryName }}
+        </div>
+
+        <div class="desktop-cell col-account" role="cell">
+          {{ item.accountName }}
+        </div>
+
+        <div class="desktop-cell col-tags" role="cell">
+          <ion-chip color="primary" *ngFor="let tag of item.transaction.tags || []">
+            {{ tag }}
+          </ion-chip>
+        </div>
+
+        <div
+          class="desktop-cell col-amount amount-note"
+          role="cell"
+          [class.positive-amount]="item.transaction.amount > 0"
+        >
+          {{ getDisplayAmount(item.transaction.amount) | currency:selectedCurrency }}
+        </div>
+
+        <div class="desktop-cell col-actions" role="cell">
+          <ion-button fill="clear" color="danger" aria-label="Delete transaction" (click)="deleteFromDesktop($event, item)">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ion-list *ngIf="!loading && !error && hasTransactions && !isDesktopView">
     <ng-container *ngFor="let group of groupedItems; trackBy: trackByDateGroup">
       <ion-item-divider sticky>
         <ion-label>{{ group.dateLabel }}</ion-label>

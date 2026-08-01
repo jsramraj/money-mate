@@ -31,6 +31,14 @@ export interface TransactionFilterState {
   tags: string[];
 }
 
+export type TransactionSortField = 'date' | 'amount';
+export type TransactionSortDirection = 'asc' | 'desc';
+
+export interface TransactionFilterModalResult extends TransactionFilterState {
+  sortField: TransactionSortField;
+  sortDirection: TransactionSortDirection;
+}
+
 @Component({
   selector: 'app-transaction-filter-modal',
   standalone: true,
@@ -66,6 +74,9 @@ export class TransactionFilterModalComponent {
   @Input() accounts: Account[] = [];
   @Input() categories?: Category[];
   @Input() availableTags: string[] = [];
+  @Input() showSortOptions = true;
+  @Input() initialSortField: TransactionSortField = 'date';
+  @Input() initialSortDirection: TransactionSortDirection = 'desc';
 
   resolvedCategories: Category[] = [];
 
@@ -75,6 +86,9 @@ export class TransactionFilterModalComponent {
     accountIds: [],
     tags: [],
   };
+
+  sortField: TransactionSortField = 'date';
+  sortDirection: TransactionSortDirection = 'desc';
 
   readonly allTypes: TransactionType[] = ['expense', 'income', 'transfer'];
 
@@ -99,6 +113,9 @@ export class TransactionFilterModalComponent {
       this.form.types = [...this.allTypes];
     }
 
+    this.sortField = this.initialSortField;
+    this.sortDirection = this.initialSortDirection;
+
     await this.loadCategoriesIfNeeded();
   }
 
@@ -122,6 +139,10 @@ export class TransactionFilterModalComponent {
       accountIds: [],
       tags: [],
     };
+    if (this.showSortOptions) {
+      this.sortField = 'date';
+      this.sortDirection = 'desc';
+    }
   }
 
   get categorySelectionLabel(): string {
@@ -179,7 +200,9 @@ export class TransactionFilterModalComponent {
         categoryIds: [...this.form.categoryIds],
         accountIds: [...this.form.accountIds],
         tags: [...this.form.tags],
-      } satisfies TransactionFilterState,
+        sortField: this.sortField,
+        sortDirection: this.sortDirection,
+      } satisfies TransactionFilterModalResult,
       'apply',
     );
   }

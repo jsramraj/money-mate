@@ -72,6 +72,22 @@
         </ion-select-option>
       </ion-select>
     </ion-item>
+
+    <ion-item *ngIf="showSortOptions">
+      <ion-label position="stacked">Sort by</ion-label>
+      <ion-select [(ngModel)]="sortField" interface="popover">
+        <ion-select-option value="date">Date</ion-select-option>
+        <ion-select-option value="amount">Amount</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item *ngIf="showSortOptions">
+      <ion-label position="stacked">Sort direction</ion-label>
+      <ion-select [(ngModel)]="sortDirection" interface="popover">
+        <ion-select-option value="desc">Descending</ion-select-option>
+        <ion-select-option value="asc">Ascending</ion-select-option>
+      </ion-select>
+    </ion-item>
   </ion-list>
 </ion-content>
 
