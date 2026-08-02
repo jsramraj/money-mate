@@ -13,44 +13,56 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-list lines="full" class="customize-list">
-    <ion-reorder-group [disabled]="false" (ionItemReorder)="handleReorder($event)">
-      <ion-item *ngFor="let widget of widgets; trackBy: trackByWidgetId">
-        <ion-label class="widget-label-row">
-          <div class="widget-row">
-            <div class="widget-info">
-              <h2><strong>{{ widget.title }}</strong></h2>
-              <p style="color: #888;">{{ widget.subtitle }}</p>
-            </div>
-          </div>
-            <img
-              class="widget-icon-preview"
-              [src]="getWidgetIconPath(widget.id)"
-              (error)="onImageError($event)"
-              [alt]="widget.title + ' preview'"
-              loading="lazy"
-              aria-hidden="true"
-            />
-        </ion-label>
+  <div class="customize-shell">
+    <section class="pane" aria-label="Widget layout controls">
+      <div class="pane-header">
+        <h2>Arrange Widgets</h2>
+        <p>Drag to reorder and use toggles to show or hide widgets.</p>
+      </div>
 
-        <ion-toggle
-          slot="end"
-          [checked]="widget.visible"
-          (ionChange)="onToggleVisibility(widget.id, $event.detail.checked)"
-          aria-label="Show {{ widget.title }}">
-        </ion-toggle>
+      <ion-list lines="none" class="customize-list">
+        <ion-reorder-group class="widget-grid" [disabled]="false" (ionItemReorder)="handleReorder($event)">
+          <ion-item class="widget-item" *ngFor="let widget of widgets; trackBy: trackByWidgetId">
+            <ion-label class="widget-label-row">
+              <div class="widget-row">
+                <div class="widget-info">
+                  <div class="widget-title-row">
+                    <h2>{{ widget.title }}</h2>
+                    <span class="order-chip">#{{ widget.order }}</span>
+                  </div>
+                  <p>{{ widget.subtitle }}</p>
+                </div>
+              </div>
+              <img
+                class="widget-icon-preview"
+                [src]="getWidgetIconPath(widget.id)"
+                (error)="onImageError($event)"
+                [alt]="widget.title + ' preview'"
+                loading="lazy"
+                aria-hidden="true"
+              />
+            </ion-label>
 
-        <ion-reorder slot="end"></ion-reorder>
-      </ion-item>
-    </ion-reorder-group>
-  </ion-list>
+            <ion-toggle
+              slot="end"
+              [checked]="widget.visible"
+              (ionChange)="onToggleVisibility(widget.id, $event.detail.checked)"
+              aria-label="Show {{ widget.title }}">
+            </ion-toggle>
 
-  <div class="actions">
-    <ion-button fill="outline" expand="block" (click)="resetToDefault()">
-      Reset to default
-    </ion-button>
-    <ion-button expand="block" (click)="save()">
-      Save layout
-    </ion-button>
+            <ion-reorder slot="end"></ion-reorder>
+          </ion-item>
+        </ion-reorder-group>
+      </ion-list>
+    </section>
+
+    <div class="actions" aria-label="Save and reset actions">
+      <ion-button fill="outline" expand="block" (click)="resetToDefault()">
+        Reset to default
+      </ion-button>
+      <ion-button expand="block" (click)="save()">
+        Save layout
+      </ion-button>
+    </div>
   </div>
 </ion-content>

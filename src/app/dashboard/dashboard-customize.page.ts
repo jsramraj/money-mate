@@ -17,8 +17,6 @@ import {
   IonToggle,
   IonReorder,
   IonReorderGroup,
-  IonCard,
-  IonCardContent,
   ItemReorderEventDetail
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -85,6 +83,7 @@ export class DashboardCustomizePage {
     const themeFolder = this.theme === 'dark' ? 'dark-theme' : 'light-theme';
     const supportedWidgetIds = new Set([
       'top-summary',
+      'account-balance-single',
       'daily-expenses',
       'expense-category-delta',
       'expense-breakdown',
