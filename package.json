@@ -55,6 +55,7 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "8.2.0",
     "@ionic/angular-toolkit": "^12.0.0",
+    "@testing-library/angular": "^18.1.1",
     "@types/jasmine": "~5.1.0",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
