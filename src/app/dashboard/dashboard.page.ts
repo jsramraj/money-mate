@@ -173,6 +173,21 @@ export class DashboardPage implements OnInit, OnDestroy {
     return widget.id;
   }
 
+  getWidgetGridClass(widgetId: DashboardWidgetId): string {
+    switch (widgetId) {
+      case 'recent-transactions':
+      case 'expense-category-delta':
+      case 'daily-expenses':
+      case 'expense-comparison':
+        return 'span-2';
+      case 'account-balance-single':
+      case 'top-summary':
+        return 'span-1';
+      default:
+        return '';
+    }
+  }
+
   async openCustomizeDashboard(): Promise<void> {
     this.analyticsService.trackEvent('dashboard_customize_opened', {
       visible_widget_count: this.visibleWidgets.length,

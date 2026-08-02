@@ -28,9 +28,14 @@
   </div>
 
   <div class="container" *ngIf="visibleWidgets.length > 0; else emptyState">
-    <ng-container *ngFor="let widget of visibleWidgets; trackBy: trackByWidgetId">
-      <ng-container *ngComponentOutlet="widget.component"></ng-container>
-    </ng-container>
+    <div class="widget-grid">
+      <div
+        *ngFor="let widget of visibleWidgets; trackBy: trackByWidgetId"
+        class="widget-shell"
+        [ngClass]="getWidgetGridClass(widget.id)">
+        <ng-container *ngComponentOutlet="widget.component"></ng-container>
+      </div>
+    </div>
   </div>
 
   <ng-template #emptyState>
