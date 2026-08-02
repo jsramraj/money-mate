@@ -2,7 +2,7 @@ import { AuditableEntity } from './common.types';
 
 export interface Transaction extends AuditableEntity {
   accountId: string; // Which account this affects
-  amount: number; // Positive for income, negative for expenses
+  amount: number; // Always stored as absolute value; type determines debit/credit effect
   type: 'income' | 'expense' | 'transfer';
   categoryId: string; // Links to category
   description: string; // "Grocery shopping", "Salary deposit"

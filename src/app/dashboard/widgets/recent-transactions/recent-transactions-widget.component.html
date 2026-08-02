@@ -52,7 +52,11 @@
         </ion-label>
 
         <div slot="end" class="amount-block">
-          <ion-note class="amount-note" [class.positive-amount]="item.transaction.amount > 0">
+          <ion-note
+            class="amount-note"
+            [class.income-transfer-amount]="item.transaction.type !== 'expense'"
+            [class.expense-amount]="item.transaction.type === 'expense'"
+          >
             {{ formatAmount(item.transaction.amount) }}
           </ion-note>
           <span class="date-note">{{ formatDate(item.date) }}</span>

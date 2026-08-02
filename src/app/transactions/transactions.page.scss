@@ -64,8 +64,12 @@ ion-item p {
   font-weight: 700;
   color: var(--ion-text-color);
 
-  &.positive-amount {
+  &.income-transfer-amount {
     color: var(--ion-color-success);
+  }
+
+  &.expense-amount {
+    color: #fff;
   }
 }
 

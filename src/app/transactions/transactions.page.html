@@ -115,7 +115,8 @@
         <div
           class="desktop-cell col-amount amount-note"
           role="cell"
-          [class.positive-amount]="item.transaction.amount > 0"
+          [class.income-transfer-amount]="item.transaction.type !== 'expense'"
+          [class.expense-amount]="item.transaction.type === 'expense'"
         >
           {{ getDisplayAmount(item.transaction.amount) | currency:selectedCurrency }}
         </div>
@@ -173,7 +174,8 @@
           <ion-note
             slot="end"
             class="amount-note"
-            [class.positive-amount]="item.transaction.amount > 0"
+            [class.income-transfer-amount]="item.transaction.type !== 'expense'"
+            [class.expense-amount]="item.transaction.type === 'expense'"
           >
             {{ getDisplayAmount(item.transaction.amount) | currency:selectedCurrency }}
           </ion-note>
