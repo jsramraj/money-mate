@@ -1,7 +1,10 @@
 <ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/tabs/transactions"></ion-back-button>
+      <ion-back-button *ngIf="!presentedAsModal" defaultHref="/tabs/transactions"></ion-back-button>
+      <ion-button *ngIf="presentedAsModal" (click)="close()" aria-label="Close transaction form">
+        <ion-icon name="close-circle"></ion-icon>
+      </ion-button>
     </ion-buttons>
     <ion-title>{{ isEditMode ? 'Edit Transaction' : 'New Transaction' }}</ion-title>
     <ion-buttons slot="end">

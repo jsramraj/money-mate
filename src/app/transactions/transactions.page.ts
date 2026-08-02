@@ -50,6 +50,7 @@ import {
   TransactionSortField,
 } from './components/transaction-filter-modal.component';
 import { DateRangeFilterComponent, DateRange } from '../shared/date-range-filter/date-range-filter.component';
+import { TransactionFormPage } from './transaction-form.page';
 
 interface TransactionListItem extends TransactionDisplayItem {
   dateKey: string;
@@ -335,7 +336,29 @@ export class TransactionsPage implements OnInit, OnDestroy {
   }
 
   async openEditModal(item: TransactionListItem): Promise<void> {
-    await this.router.navigate(['/tabs/transactions/form', item.id]);
+    if (!this.isDesktopViewport()) {
+      await this.router.navigate(['/tabs/transactions/form', item.id]);
+      return;
+    }
+
+    const modal = await this.modalController.create({
+      component: TransactionFormPage,
+      componentProps: {
+        transactionId: item.id,
+        presentedAsModal: true,
+      },
+    });
+
+    await modal.present();
+    const { role } = await modal.onWillDismiss();
+
+    if (role === 'saved' || role === 'deleted') {
+      await this.transactionRepository.getAllTransactions();
+    }
+  }
+
+  private isDesktopViewport(): boolean {
+    return window.matchMedia('(min-width: 768px)').matches;
   }
 
   async confirmDelete(item: TransactionListItem, slidingItem?: IonItemSliding): Promise<void> {

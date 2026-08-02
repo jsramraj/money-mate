@@ -1,7 +1,7 @@
 
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -81,6 +81,8 @@ import { DatabaseService } from '../core/database/database.service';
   styleUrls: ['./transaction-form.page.scss']
 })
 export class TransactionFormPage implements OnInit, OnDestroy {
+  @Input() transactionId?: string;
+  @Input() presentedAsModal = false;
 
   addMore = false;
   private readonly lastUsedAccountStorageKey = 'money-mate-last-used-account-id';
@@ -166,8 +168,8 @@ export class TransactionFormPage implements OnInit, OnDestroy {
     // Build description->category mapping from past year transactions
     await this.autoCategorizationService.initialize();
 
-    // Check for transaction id in route params (edit mode)
-    const id = this.route.snapshot.paramMap.get('id');
+    // Prefer modal-provided transaction id, then fallback to route params.
+    const id = this.transactionId ?? this.route.snapshot.paramMap.get('id');
     if (id) {
       const tx = await this.transactionRepository.getTransactionById(id);
       if (tx) {
@@ -453,12 +455,20 @@ export class TransactionFormPage implements OnInit, OnDestroy {
         return;
   }
 
-      // Navigate back to transactions list after save
-      await this.navController.back();
+      await this.closeAfterAction('saved', transaction.id);
     } catch (error) {
       console.error('Error saving transaction:', error);
       this.saving = false;
     }
+  }
+
+  async close(): Promise<void> {
+    if (this.presentedAsModal) {
+      await this.modalController.dismiss(null, 'cancel');
+      return;
+    }
+
+    await this.navController.back();
   }
 
   private async presentToast(message: string): Promise<void> {
@@ -604,11 +614,25 @@ export class TransactionFormPage implements OnInit, OnDestroy {
         source: 'transaction_form',
         transaction_type: this.transactionToEdit.type,
       });
-      await this.router.navigate(['/tabs/transactions']);
+      await this.closeAfterAction('deleted', this.transactionToEdit.id);
     } catch (error) {
       console.error('Error deleting transaction:', error);
       this.saving = false;
     }
+  }
+
+  private async closeAfterAction(action: 'saved' | 'deleted', transactionId: string): Promise<void> {
+    if (this.presentedAsModal) {
+      await this.modalController.dismiss({ action, transactionId }, action);
+      return;
+    }
+
+    if (action === 'deleted') {
+      await this.router.navigate(['/tabs/transactions']);
+      return;
+    }
+
+    await this.navController.back();
   }
 
   filterDescriptionSuggestions(event: any): void {

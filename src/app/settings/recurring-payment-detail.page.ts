@@ -21,6 +21,7 @@ import {
   IonSelectOption,
   IonTitle,
   IonToolbar,
+  ModalController,
   ToastController,
 } from '@ionic/angular/standalone';
 import { NavController } from '@ionic/angular';
@@ -30,6 +31,7 @@ import { RecurringPayment, Transaction } from '../core/database/models';
 import { DatabaseService } from '../core/database/database.service';
 import { AccountRepository, CategoryRepository, TransactionRepository } from '../core/database/repositories';
 import { TransactionPrefillService } from '../core/services/transaction-prefill.service';
+import { TransactionFormPage } from '../transactions/transaction-form.page';
 
 interface ExecutionHistoryRow {
   id: string;
@@ -89,6 +91,7 @@ export class RecurringPaymentDetailPage {
     private readonly categoryRepository: CategoryRepository,
     private readonly transactionRepository: TransactionRepository,
     private readonly navController: NavController,
+    private readonly modalController: ModalController,
     private readonly toastController: ToastController,
     private readonly cdr: ChangeDetectorRef,
     private readonly prefillService: TransactionPrefillService,
@@ -189,7 +192,25 @@ export class RecurringPaymentDetailPage {
     };
 
     this.prefillService.setTransactionPrefillData(prefillData);
-    await this.router.navigate(['/tabs/transactions/form']);
+
+    if (!this.isDesktopViewport()) {
+      await this.router.navigate(['/tabs/transactions/form']);
+      return;
+    }
+
+    const modal = await this.modalController.create({
+      component: TransactionFormPage,
+      componentProps: {
+        presentedAsModal: true,
+      },
+    });
+
+    await modal.present();
+    await modal.onWillDismiss();
+  }
+
+  private isDesktopViewport(): boolean {
+    return window.matchMedia('(min-width: 768px)').matches;
   }
 
   trackByExecutionRowId(_index: number, row: ExecutionHistoryRow): string {
