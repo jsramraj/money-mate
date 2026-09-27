@@ -248,7 +248,7 @@ export class AccountRepository {
     }
   }
 
-  async upsertFromSheet(account: Account): Promise<void> {
+  async upsertFromSheet(account: Account, notify = true): Promise<void> {
     try {
       await this.db.runWithoutDirtyTracking(async () => {
         await this.db.accounts.put({
@@ -259,7 +259,10 @@ export class AccountRepository {
         });
       });
 
-      await this.getAccounts();
+      // Bulk sync callers refresh once after the whole batch instead of per row.
+      if (notify) {
+        await this.getAccounts();
+      }
     } catch (error) {
       console.error('Error upserting account from sheet:', error);
       throw new Error('Failed to upsert account from sheet');

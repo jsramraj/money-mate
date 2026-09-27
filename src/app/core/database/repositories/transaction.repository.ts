@@ -389,7 +389,7 @@ export class TransactionRepository {
     }
   }
 
-  async upsertFromSheet(transaction: Transaction): Promise<void> {
+  async upsertFromSheet(transaction: Transaction, notify = true): Promise<void> {
     try {
       await this.db.transaction('rw', [this.db.transactions, this.db.accounts], async () => {
         const normalizedTransaction: Transaction = {
@@ -455,7 +455,10 @@ export class TransactionRepository {
         }
       });
 
-      await this.refreshTransactionStreams();
+      // Bulk sync callers refresh once after the whole batch instead of per row.
+      if (notify) {
+        await this.refreshTransactionStreams();
+      }
     } catch (error) {
       console.error('Error upserting transaction from sheet:', error);
       throw new Error('Failed to upsert transaction from sheet');

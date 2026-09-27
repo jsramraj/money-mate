@@ -263,7 +263,7 @@ export class CategoryRepository {
     }
   }
 
-  async upsertFromSheet(category: Category): Promise<void> {
+  async upsertFromSheet(category: Category, notify = true): Promise<void> {
     try {
       await this.db.runWithoutDirtyTracking(async () => {
         await this.db.categories.put({
@@ -274,7 +274,10 @@ export class CategoryRepository {
         });
       });
 
-      await this.getCategories();
+      // Bulk sync callers refresh once after the whole batch instead of per row.
+      if (notify) {
+        await this.getCategories();
+      }
     } catch (error) {
       console.error('Error upserting category from sheet:', error);
       throw new Error('Failed to upsert category from sheet');

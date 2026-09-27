@@ -173,7 +173,7 @@ export class BudgetRepository {
     }
   }
 
-  async upsertFromSheet(budget: Budget): Promise<void> {
+  async upsertFromSheet(budget: Budget, notify = true): Promise<void> {
     this.assertBudgetInputForV1(budget);
 
     await this.db.runWithoutDirtyTracking(async () => {
@@ -188,7 +188,10 @@ export class BudgetRepository {
       });
     });
 
-    await this.getBudgets();
+    // Bulk sync callers refresh once after the whole batch instead of per row.
+    if (notify) {
+      await this.getBudgets();
+    }
   }
 
   private assertBudgetInputForV1(input: CreateBudgetInput): void {

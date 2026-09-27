@@ -318,7 +318,7 @@ export class GoogleSheetService {
     for (const [id, sheetRecord] of sheetById.entries()) {
       const localRecord = localById.get(id);
       if (!localRecord) {
-        await this.accountRepository.upsertFromSheet(sheetRecord.account);
+        await this.accountRepository.upsertFromSheet(sheetRecord.account, false);
         continue;
       }
 
@@ -326,9 +326,12 @@ export class GoogleSheetService {
       const sheetUpdatedAt = new Date(sheetRecord.account.updatedAt).getTime();
 
       if (sheetUpdatedAt > localUpdatedAt && !localRecord.isDirty) {
-        await this.accountRepository.upsertFromSheet(sheetRecord.account);
+        await this.accountRepository.upsertFromSheet(sheetRecord.account, false);
       }
     }
+
+    // Single refresh/emit for the whole batch instead of one per synced row.
+    await this.accountRepository.getAccounts();
 
     const dirtyAccounts = await this.accountRepository.getDirtyAccounts();
     const pushedIds: string[] = [];
@@ -388,7 +391,7 @@ export class GoogleSheetService {
     for (const [id, sheetRecord] of sheetById.entries()) {
       const localRecord = localById.get(id);
       if (!localRecord) {
-        await this.categoryRepository.upsertFromSheet(sheetRecord.category);
+        await this.categoryRepository.upsertFromSheet(sheetRecord.category, false);
         continue;
       }
 
@@ -397,9 +400,12 @@ export class GoogleSheetService {
       const isSheetNewer = sheetUpdatedAt > localUpdatedAt;
 
       if (isSheetNewer && !localRecord.isDirty) {
-        await this.categoryRepository.upsertFromSheet(sheetRecord.category);
+        await this.categoryRepository.upsertFromSheet(sheetRecord.category, false);
       }
     }
+
+    // Single refresh/emit for the whole batch instead of one per synced row.
+    await this.categoryRepository.getCategories();
 
     const dirtyCategories = await this.categoryRepository.getDirtyCategories();
     const pushedIds: string[] = [];
@@ -459,7 +465,7 @@ export class GoogleSheetService {
     for (const [id, sheetRecord] of sheetById.entries()) {
       const localRecord = localById.get(id);
       if (!localRecord) {
-        await this.budgetRepository.upsertFromSheet(sheetRecord.budget);
+        await this.budgetRepository.upsertFromSheet(sheetRecord.budget, false);
         continue;
       }
 
@@ -467,9 +473,12 @@ export class GoogleSheetService {
       const sheetUpdatedAt = new Date(sheetRecord.budget.updatedAt).getTime();
 
       if (sheetUpdatedAt > localUpdatedAt && !localRecord.isDirty) {
-        await this.budgetRepository.upsertFromSheet(sheetRecord.budget);
+        await this.budgetRepository.upsertFromSheet(sheetRecord.budget, false);
       }
     }
+
+    // Single refresh/emit for the whole batch instead of one per synced row.
+    await this.budgetRepository.getBudgets();
 
     const dirtyBudgets = await this.budgetRepository.getDirtyBudgets();
     const pushedIds: string[] = [];
@@ -529,16 +538,19 @@ export class GoogleSheetService {
     for (const [id, sheetRecord] of sheetById.entries()) {
       const localRecord = localById.get(id);
       if (!localRecord) {
-        await this.transactionRepository.upsertFromSheet(sheetRecord.transaction);
+        await this.transactionRepository.upsertFromSheet(sheetRecord.transaction, false);
         continue;
       }
 
       const localUpdatedAt = new Date(localRecord.updatedAt).getTime();
       const sheetUpdatedAt = new Date(sheetRecord.transaction.updatedAt).getTime();
       if (sheetUpdatedAt > localUpdatedAt && !localRecord.isDirty) {
-        await this.transactionRepository.upsertFromSheet(sheetRecord.transaction);
+        await this.transactionRepository.upsertFromSheet(sheetRecord.transaction, false);
       }
     }
+
+    // Single refresh/emit for the whole batch instead of one per synced row.
+    await this.transactionRepository.getAllTransactions();
 
     const dirtyTransactions = await this.transactionRepository.getDirtyTransactions();
     const pushedIds: string[] = [];
