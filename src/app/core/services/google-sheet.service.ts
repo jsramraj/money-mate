@@ -23,6 +23,15 @@ export class GoogleSheetService {
     private readonly db: DatabaseService,
   ) {}
 
+  async syncAll(): Promise<void> {
+    await this.migrateSheetSchemaIfNeeded();
+    await this.syncAccounts();
+    await this.syncCategories();
+    await this.syncBudgets();
+    await this.syncRecurringPayments();
+    await this.syncTransactions();
+  }
+
   async importAllFromSheetToLocal(): Promise<void> {
     const [accountsRows, categoriesRows, transactionsRows, budgetsRows, recurringPaymentsRows] = await Promise.all([
       this.getValuesOrEmpty('accounts!A:M'),

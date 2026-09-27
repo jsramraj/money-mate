@@ -187,11 +187,7 @@ export class SettingsPage implements OnInit, OnDestroy {
       this.syncingSettings = true;
       this.settingsSyncError = null;
 
-      await this.googleSheetService.migrateSheetSchemaIfNeeded();
-      await this.googleSheetService.syncAccounts();
-      await this.googleSheetService.syncCategories();
-      await this.googleSheetService.syncBudgets();
-      await this.googleSheetService.syncRecurringPayments();
+      await this.googleSheetService.syncAll();
       await this.refreshDirtyLookupCount();
 
       await this.presentToast('Settings data synced successfully', 'success');

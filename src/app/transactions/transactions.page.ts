@@ -483,7 +483,8 @@ export class TransactionsPage implements OnInit, OnDestroy {
         dirty_count: this.allTransactions.filter((transaction) => !!transaction.isDirty).length,
       });
 
-      await this.googleSheetService.syncTransactions();
+      await this.googleSheetService.syncAll();
+      await this.refreshLookups();
       await this.transactionRepository.getAllTransactions();
       this.analyticsService.trackEvent('sync_transactions', { status: 'success' });
       await this.presentToast('Transactions synced successfully', 'success');
