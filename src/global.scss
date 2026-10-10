@@ -35,3 +35,21 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 @import '@ionic/angular/css/palettes/dark.class.css';
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+/* Dashboard list widgets scroll inside the card on desktop instead of stretching the column. */
+@media (min-width: 768px) {
+  .widget-scroll-list {
+    max-height: 420px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--ion-color-step-300, var(--ion-color-medium));
+      border-radius: 3px;
+    }
+  }
+}

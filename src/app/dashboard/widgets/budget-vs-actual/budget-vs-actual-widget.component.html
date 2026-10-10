@@ -31,7 +31,7 @@
       <p class="state-text">No active budgets found.</p>
     </ion-text>
 
-    <div class="budget-list" *ngIf="!loading && !error && hasItems">
+    <div class="budget-list widget-scroll-list" *ngIf="!loading && !error && hasItems">
       <div class="budget-row" *ngFor="let item of items; trackBy: trackByBudgetId">
         <div class="budget-row__header">
           <ion-icon [name]="getBudgetIcon(item)" [style.color]="getBudgetIconColor(item)"></ion-icon>

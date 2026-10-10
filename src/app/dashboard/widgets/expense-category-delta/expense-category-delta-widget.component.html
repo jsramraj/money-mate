@@ -31,7 +31,7 @@
       <p class="state-text">No expense transactions found for this range.</p>
     </ion-text>
 
-    <div class="delta-list" *ngIf="!loading && !error && hasItems">
+    <div class="delta-list widget-scroll-list" *ngIf="!loading && !error && hasItems">
       <div class="delta-row" *ngFor="let row of rows; trackBy: trackByCategoryId">
         <div class="delta-row__header">
           <ion-icon [name]="getRowIcon(row)" [style.color]="row.categoryColor"></ion-icon>

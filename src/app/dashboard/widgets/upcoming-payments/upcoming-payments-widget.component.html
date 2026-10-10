@@ -14,7 +14,7 @@
       <ion-spinner name="crescent"></ion-spinner>
     </div>
 
-    <ion-list *ngIf="!loading && items.length > 0">
+    <ion-list class="widget-scroll-list" *ngIf="!loading && items.length > 0">
       <ion-item *ngFor="let item of items">
         <div slot="start" style="min-width:76px; display:flex; justify-content:flex-start;">
           <div style="width:64px; border:1px solid var(--ion-color-step-200); border-radius:12px; padding:6px 8px; text-align:center; background:var(--ion-color-light); line-height:1.1;">

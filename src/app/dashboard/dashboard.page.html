@@ -31,8 +31,7 @@
     <div class="widget-grid">
       <div
         *ngFor="let widget of visibleWidgets; trackBy: trackByWidgetId"
-        class="widget-shell"
-        [ngClass]="getWidgetGridClass(widget.id)">
+        class="widget-shell">
         <ng-container *ngComponentOutlet="widget.component"></ng-container>
       </div>
     </div>

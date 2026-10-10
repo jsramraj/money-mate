@@ -22,7 +22,7 @@
       <p class="state-text">No recent transactions</p>
     </ion-text>
 
-    <ion-list class="transaction-list" *ngIf="!loading && !error && items.length > 0">
+    <ion-list class="transaction-list widget-scroll-list" *ngIf="!loading && !error && items.length > 0">
       <ion-item
         class="transaction-item"
         lines="full"

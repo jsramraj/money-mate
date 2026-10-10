@@ -39,14 +39,14 @@
       class="chart-scroll-container"
       *ngIf="!loading && !error && !chartLoadError && hasChartData"
     >
-      <div class="chart-inner" [style.width.px]="chartWidth">
+      <div class="chart-inner" [style.min-width.px]="chartWidth">
         <google-chart
           [type]="chartType"
           [columns]="chartColumns"
           [data]="chartData"
           [options]="chartOptions"
-          [width]="chartWidth"
           [height]="300"
+          [dynamicResize]="true"
           (error)="onChartError()"
         ></google-chart>
       </div>

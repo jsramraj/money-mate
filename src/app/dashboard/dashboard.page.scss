@@ -50,12 +50,19 @@ ion-card {
   }
 
   .widget-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    display: block;
+    column-count: 2;
+    column-gap: 16px;
   }
 
-  .widget-shell.span-2 {
-    grid-column: span 2;
+  .widget-shell {
+    break-inside: avoid;
+    margin-bottom: 16px;
+  }
+
+  // Widget cards carry their own mobile margins; the column gap handles spacing here.
+  .widget-shell ::ng-deep ion-card {
+    margin: 0;
   }
 }
 
@@ -69,15 +76,11 @@ ion-card {
   }
 
   .widget-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
+    column-count: 3;
+    column-gap: 18px;
   }
 
-  .widget-shell.span-2 {
-    grid-column: span 2;
-  }
-
-  .widget-shell.span-3 {
-    grid-column: span 3;
+  .widget-shell {
+    margin-bottom: 18px;
   }
 }
