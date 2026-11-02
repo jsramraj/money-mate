@@ -115,7 +115,7 @@
 
         <div class="history-table__row" *ngFor="let row of executionRows; trackBy: trackByExecutionRowId">
           <span>{{ row.date | date:'MMM d, y' }}</span>
-          <span class="history-table__amount">{{ row.amount | currency }}</span>
+          <span class="history-table__amount">{{ row.amount | currency:selectedCurrency }}</span>
         </div>
       </div>
     </section>
