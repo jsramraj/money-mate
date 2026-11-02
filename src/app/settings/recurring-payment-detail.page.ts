@@ -69,6 +69,7 @@ interface ExecutionHistoryRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecurringPaymentDetailPage {
+  private readonly CURRENCY_KEY = 'money-mate-currency';
   recurringPayment: RecurringPayment | null = null;
   loading = true;
   saving = false;
@@ -80,6 +81,7 @@ export class RecurringPaymentDetailPage {
   amountValue: number | null = null;
   dateValue = '';
   statusValue: RecurringPayment['status'] = 'active';
+  selectedCurrency = 'USD';
   private accountNames = new Map<string, string>();
   private categoryNames = new Map<string, string>();
 
@@ -100,6 +102,7 @@ export class RecurringPaymentDetailPage {
   }
 
   ngOnInit(): void {
+    this.selectedCurrency = localStorage.getItem(this.CURRENCY_KEY) || 'USD';
     void this.loadRecurringPayment();
   }
 
