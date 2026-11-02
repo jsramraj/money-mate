@@ -20,12 +20,18 @@ describe('TransactionFormPage', () => {
       providers: [
         { provide: AccountRepository, useValue: { getAccounts: async () => [] } },
         { provide: CategoryRepository, useValue: { getCategories: async () => [], categories$: of([]) } },
-        { provide: TransactionRepository, useValue: {} },
+        { provide: TransactionRepository, useValue: {
+          getUniqueDescriptions: async () => [],
+          getUniqueTags: async () => [],
+        } },
         { provide: Router, useValue: {} },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } },
         { provide: AlertController, useValue: {} },
         { provide: NavController, useValue: {} },
-        { provide: AutoCategorizationService, useValue: { initialize: async () => undefined } },
+        { provide: AutoCategorizationService, useValue: {
+          initialize: async () => undefined,
+          getCategoryForDescription: () => undefined,
+        } },
         { provide: AnalyticsService, useValue: {} },
         { provide: ToastController, useValue: {} },
         { provide: ModalController, useValue: {} },
@@ -42,19 +48,17 @@ describe('TransactionFormPage', () => {
     expect(component).toBeTruthy();
   });
 
-  it('uses a native date input when presented in the desktop modal', async () => {
+  it('uses a native date input when presented in the desktop modal', () => {
     component.presentedAsModal = true;
     fixture.detectChanges();
-    await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('ion-input[type="date"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('ion-datetime-button')).toBeNull();
     expect(fixture.nativeElement.querySelector('ion-modal')).toBeNull();
   });
 
-  it('keeps the Ionic date picker on the mobile route', async () => {
+  it('keeps the Ionic date picker on the mobile route', () => {
     fixture.detectChanges();
-    await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('ion-input[type="date"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('ion-datetime-button')).toBeTruthy();
