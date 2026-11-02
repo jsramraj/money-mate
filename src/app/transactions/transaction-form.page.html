@@ -100,7 +100,16 @@
     </ion-item>
     <ion-item>
       <ion-label position="stacked">Date *</ion-label>
-      <ion-datetime-button style="margin-top: 6px;" datetime="transaction-date"></ion-datetime-button>
+      <ion-input
+        *ngIf="presentedAsModal"
+        type="date"
+        [(ngModel)]="form.date"
+      ></ion-input>
+      <ion-datetime-button
+        *ngIf="!presentedAsModal"
+        style="margin-top: 6px;"
+        datetime="transaction-date"
+      ></ion-datetime-button>
     </ion-item>
 
     <ion-item button detail="false" (click)="showMoreOptions = !showMoreOptions">
@@ -158,7 +167,7 @@
     </ng-container>
   </ion-list>
   
-  <ion-modal [keepContentsMounted]="true">
+  <ion-modal *ngIf="!presentedAsModal" [keepContentsMounted]="true">
     <ng-template>
       <ion-datetime
         id="transaction-date"
