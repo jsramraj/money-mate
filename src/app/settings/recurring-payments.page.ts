@@ -69,6 +69,7 @@ export class RecurringPaymentsPage implements OnInit {
   selectedTab: 'active' | 'paused' = 'active';
   private accountNames = new Map<string, string>();
   private categoryNames = new Map<string, string>();
+  private latestTransactionDates = new Map<string, Date>();
   private completedRecurringPaymentIdsInCurrentMonth = new Set<string>();
 
   constructor(
@@ -274,6 +275,10 @@ export class RecurringPaymentsPage implements OnInit {
     return this.accountNames.get(accountId) ?? 'Unknown account';
   }
 
+  getLatestTransactionDate(recurringPayment: RecurringPayment): Date | undefined {
+    return this.latestTransactionDates.get(recurringPayment.id);
+  }
+
   async openEditPage(recurringPayment: RecurringPayment): Promise<void> {
     await this.router.navigate(['/settings/recurring-payments', recurringPayment.id]);
   }
@@ -296,17 +301,28 @@ export class RecurringPaymentsPage implements OnInit {
       const visibleRecurringPayments = this.visibleRecurringPayments;
       const recurringPaymentIds = visibleRecurringPayments.map((item) => item.id);
       const currentMonthRange = this.getMonthDateRange();
-      const currentMonthTransactions = await this.transactionRepository.getTransactionsByRecurringPaymentIdsInDateRange(
-        recurringPaymentIds,
-        currentMonthRange.start,
-        currentMonthRange.end,
-      );
+      const [currentMonthTransactions, recurringPaymentTransactions] = await Promise.all([
+        this.transactionRepository.getTransactionsByRecurringPaymentIdsInDateRange(
+          recurringPaymentIds,
+          currentMonthRange.start,
+          currentMonthRange.end,
+        ),
+        recurringPaymentIds.length
+          ? this.transactionRepository.queryTransactions({ recurringPaymentIds })
+          : Promise.resolve([]),
+      ]);
 
       this.completedRecurringPaymentIdsInCurrentMonth = new Set(
         currentMonthTransactions
           .map((item) => item.recurringPaymentId)
           .filter((id): id is string => !!id),
       );
+      this.latestTransactionDates = new Map();
+      recurringPaymentTransactions.forEach((transaction) => {
+        if (transaction.recurringPaymentId && !this.latestTransactionDates.has(transaction.recurringPaymentId)) {
+          this.latestTransactionDates.set(transaction.recurringPaymentId, new Date(transaction.date));
+        }
+      });
 
       this.activeRecurringPayments = visibleRecurringPayments
         .filter((item) => item.status !== 'paused')

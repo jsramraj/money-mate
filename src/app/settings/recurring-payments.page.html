@@ -89,6 +89,9 @@
                     • {{ getCategoryName(recurringPayment) }}
                   </ng-container>
                 </p>
+                <p class="meta-line" *ngIf="getLatestTransactionDate(recurringPayment) as latestTransactionDate">
+                  Last transaction: {{ latestTransactionDate | date:'mediumDate' }}
+                </p>
               </div>
 
               <div class="recurring-amount-block">
@@ -150,6 +153,9 @@
                 <ng-container *ngIf="recurringPayment.frequency !== 'once'">
                   {{ getCategoryName(recurringPayment) }}
                 </ng-container>
+              </p>
+              <p class="meta-line" *ngIf="getLatestTransactionDate(recurringPayment) as latestTransactionDate">
+                Last transaction: {{ latestTransactionDate | date:'mediumDate' }}
               </p>
             </div>
 
